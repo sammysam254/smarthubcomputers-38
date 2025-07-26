@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
@@ -29,6 +30,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetails />} />
               <Route path="/laptops" element={<Products />} />
               <Route path="/desktops" element={<Products />} />
               <Route path="/components" element={<Products />} />
