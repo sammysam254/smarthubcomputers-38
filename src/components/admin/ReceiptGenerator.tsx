@@ -108,7 +108,7 @@ const ReceiptGenerator = () => {
                 body { font-family: Arial, sans-serif; margin: 20px; }
                 .receipt { max-width: 800px; margin: 0 auto; }
                 .header { text-align: center; margin-bottom: 30px; }
-                .logo { max-height: 80px; margin-bottom: 10px; }
+                .logo { max-height: 80px; margin: 0 auto 16px auto; display: block; }
                 .company-name { font-size: 24px; font-weight: bold; margin: 10px 0; }
                 .contact-info { font-size: 14px; color: #666; }
                 .section { margin: 20px 0; }
@@ -242,12 +242,14 @@ const ReceiptGenerator = () => {
       <div ref={receiptRef} className="receipt bg-white p-8 border rounded-lg shadow-lg max-w-4xl mx-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
         {/* Header */}
         <div className="header text-center mb-8">
-          <img 
-            src="/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png" 
-            alt="SmartHub Computers" 
-            className="logo mx-auto mb-4"
-            style={{ maxHeight: '80px' }}
-          />
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png" 
+              alt="SmartHub Computers" 
+              className="h-20 w-auto object-contain"
+              style={{ maxHeight: '80px', display: 'block', margin: '0 auto' }}
+            />
+          </div>
           <h1 className="company-name text-2xl font-bold mb-2">SmartHub Computers</h1>
           <div className="contact-info text-sm text-gray-600">
             <p>Koinange Street Uniafric House Room 208</p>
