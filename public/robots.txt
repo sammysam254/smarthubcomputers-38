@@ -1,8 +1,25 @@
-
-# SmartHub Computers - Robots.txt for better SEO
+# SmartHub Computers - Robots.txt for SEO optimization
 
 User-agent: *
 Allow: /
+
+# Explicitly allow category pages for better indexing
+Allow: /laptops
+Allow: /desktops
+Allow: /components
+Allow: /peripherals
+Allow: /gaming
+Allow: /audio
+Allow: /printers
+Allow: /phones
+Allow: /refurbished-phones
+
+# Allow important pages for SEO
+Allow: /products/
+Allow: /flash-sales/
+Allow: /uploads/
+
+# Disallow private and admin areas
 Disallow: /admin/
 Disallow: /api/
 Disallow: /auth/
@@ -15,23 +32,24 @@ Disallow: /*.pdf$
 Disallow: /*.doc$
 Disallow: /*.docx$
 
-# Allow important pages for SEO
-Allow: /products/
-Allow: /categories/
-Allow: /flash-sales/
-Allow: /blog/
-Allow: /uploads/
-
 # Crawl-delay for better server performance
 Crawl-delay: 1
 
 # Sitemap locations
 Sitemap: https://smarthubcomputers.com/sitemap.xml
-Sitemap: https://smarthubcomputers.com/sitemap-index.xml
 
 # Search engine specific instructions
 User-agent: Googlebot
 Allow: /
+Allow: /laptops
+Allow: /desktops
+Allow: /components
+Allow: /peripherals
+Allow: /gaming
+Allow: /audio
+Allow: /printers
+Allow: /phones
+Allow: /refurbished-phones
 Disallow: /admin/
 Disallow: /api/
 Crawl-delay: 1
@@ -43,6 +61,15 @@ Disallow: /uploads/private/
 
 User-agent: Bingbot
 Allow: /
+Allow: /laptops
+Allow: /desktops
+Allow: /components
+Allow: /peripherals
+Allow: /gaming
+Allow: /audio
+Allow: /printers
+Allow: /phones
+Allow: /refurbished-phones
 Disallow: /admin/
 Disallow: /api/
 Crawl-delay: 1
@@ -65,13 +92,3 @@ Disallow: /
 
 User-agent: DotBot
 Disallow: /
-
-# Allow AI crawlers (for SEO purposes)
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: CCBot
-Allow: /
