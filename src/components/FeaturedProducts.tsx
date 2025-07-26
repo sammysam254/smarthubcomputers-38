@@ -184,17 +184,35 @@ const FeaturedProducts = () => {
         if (!isMounted) return;
         if (error) throw error;
 
-        const transformedProducts = data?.map(product => ({
-          ...product,
-          images: Array.isArray(product.images) ? product.images : (product.images ? [product.images] : ['/placeholder-product.jpg']),
-          original_price: product.original_price || null,
-          rating: product.rating || 5,
-          reviews_count: product.reviews_count || 0,
-          badge: product.badge || null,
-          badge_color: product.badge_color || null,
-          in_stock: product.in_stock !== false,
-          category: product.category || 'Electronics'
-        })) || [];
+        const transformedProducts = data?.map(product => {
+          let imageUrls: string[] = [];
+          
+          // Parse images from JSON string
+          if (product.images) {
+            try {
+              imageUrls = JSON.parse(product.images);
+              if (!Array.isArray(imageUrls)) {
+                imageUrls = [product.images];
+              }
+            } catch {
+              imageUrls = [product.images];
+            }
+          } else {
+            imageUrls = ['/placeholder-product.jpg'];
+          }
+
+          return {
+            ...product,
+            images: imageUrls,
+            original_price: product.original_price || null,
+            rating: product.rating || 5,
+            reviews_count: product.reviews_count || 0,
+            badge: product.badge || null,
+            badge_color: product.badge_color || null,
+            in_stock: product.in_stock !== false,
+            category: product.category || 'Electronics'
+          };
+        }) || [];
 
         if (isMounted) {
           setProducts(transformedProducts);
