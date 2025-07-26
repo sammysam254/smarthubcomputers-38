@@ -37,7 +37,12 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
     <div className="group w-full text-left">
       <Card 
         className="hover:shadow-card transition-all duration-300 hover:-translate-y-2 bg-background border-border/50 hover:border-primary/30 h-full cursor-pointer"
-        onClick={() => onViewDetails(product.id)}
+        onClick={(e) => {
+          console.log('Card clicked, calling onViewDetails');
+          e.preventDefault();
+          e.stopPropagation();
+          onViewDetails(product.id);
+        }}
       >
         <CardContent className="p-0">
           <div className="relative overflow-hidden rounded-t-lg aspect-[4/3]">
@@ -267,6 +272,7 @@ const FeaturedProducts = () => {
   };
 
   const handleViewDetails = (productId: string) => {
+    console.log('handleViewDetails called with productId:', productId);
     navigate(`/products/${productId}`);
   };
 
