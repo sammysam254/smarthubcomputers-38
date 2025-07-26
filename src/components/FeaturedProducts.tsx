@@ -165,7 +165,7 @@ const FeaturedProducts = () => {
             name, 
             price, 
             description,
-            image_urls,
+            images,
             original_price,
             rating,
             reviews_count,
