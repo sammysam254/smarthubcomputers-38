@@ -36,7 +36,7 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
       <CardContent className="p-0">
         <div className="relative overflow-hidden rounded-t-lg aspect-[4/3]">
           <img 
-            src={product.images[0]} 
+            src={product.images && product.images.length > 0 ? product.images[0] : '/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png'} 
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
@@ -45,7 +45,7 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
             height={300}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center';
+              target.src = '/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png';
             }}
           />
           
@@ -166,6 +166,7 @@ const FeaturedProducts = () => {
             price, 
             description,
             images,
+            image_urls,
             original_price,
             rating,
             reviews_count,
@@ -187,8 +188,17 @@ const FeaturedProducts = () => {
         const transformedProducts = data?.map(product => {
           let imageUrls: string[] = [];
           
-          // Parse images from JSON string
-          if (product.images) {
+          // Try image_urls first, then images, then fallback
+          if (product.image_urls) {
+            try {
+              imageUrls = JSON.parse(product.image_urls);
+              if (!Array.isArray(imageUrls)) {
+                imageUrls = [product.image_urls];
+              }
+            } catch {
+              imageUrls = [product.image_urls];
+            }
+          } else if (product.images) {
             try {
               imageUrls = JSON.parse(product.images);
               if (!Array.isArray(imageUrls)) {
@@ -198,7 +208,7 @@ const FeaturedProducts = () => {
               imageUrls = [product.images];
             }
           } else {
-            imageUrls = ['/placeholder-product.jpg'];
+            imageUrls = ['/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png'];
           }
 
           return {
