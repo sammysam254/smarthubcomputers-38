@@ -10,11 +10,19 @@ const Footer = () => {
   const handleQuickLinkClick = (link: string) => {
     switch (link) {
       case "Laptops":
+        navigate('/laptops');
+        break;
       case "Desktops":
+        navigate('/desktops');
+        break;
       case "Components":
+        navigate('/components');
+        break;
       case "Gaming":
+        navigate('/gaming');
+        break;
       case "Accessories":
-        navigate(`/products?category=${link.toLowerCase()}`);
+        navigate('/peripherals');
         break;
       case "Support":
         window.location.href = "mailto:support@smarthubcomputers.com";

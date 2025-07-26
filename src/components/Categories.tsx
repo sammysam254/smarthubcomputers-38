@@ -34,7 +34,7 @@ const categories = [
     description: "Quality refurbished smartphones at great prices",
     count: "50+ Models",
     gradient: "from-emerald-500 to-emerald-600",
-    category: "refurbished phones"
+    category: "refurbished-phones"
   },
   {
     icon: Printer,
@@ -100,7 +100,7 @@ const Categories = () => {
               <Card 
                 key={index} 
                 className="group hover:shadow-card transition-all duration-300 hover:-translate-y-1 cursor-pointer border-border/50 hover:border-primary/30 h-full"
-                onClick={() => navigate(`/products?category=${category.category}`)}
+                onClick={() => navigate(`/${category.category}`)}
               >
                 <CardContent className="p-6">
                     <div className="space-y-4">
@@ -126,7 +126,7 @@ const Categories = () => {
                         className="w-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/products?category=${category.category}`);
+                          navigate(`/${category.category}`);
                         }}
                       >
                         Browse {category.title}
