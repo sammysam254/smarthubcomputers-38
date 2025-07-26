@@ -1,0 +1,77 @@
+
+# SmartHub Computers - Robots.txt for better SEO
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /private/
+Disallow: /tmp/
+Disallow: /uploads/private/
+Disallow: /*?*
+Disallow: /search?
+Disallow: /*.pdf$
+Disallow: /*.doc$
+Disallow: /*.docx$
+
+# Allow important pages for SEO
+Allow: /products/
+Allow: /categories/
+Allow: /flash-sales/
+Allow: /blog/
+Allow: /uploads/
+
+# Crawl-delay for better server performance
+Crawl-delay: 1
+
+# Sitemap locations
+Sitemap: https://smarthubcomputers.com/sitemap.xml
+Sitemap: https://smarthubcomputers.com/sitemap-index.xml
+
+# Search engine specific instructions
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 1
+
+User-agent: Googlebot-Image
+Allow: /uploads/
+Allow: /images/
+Disallow: /uploads/private/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 1
+
+# Social media crawlers
+User-agent: Twitterbot
+Allow: /
+Disallow: /admin/
+
+User-agent: facebookexternalhit
+Allow: /
+Disallow: /admin/
+
+# Block unwanted bots
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Allow AI crawlers (for SEO purposes)
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
