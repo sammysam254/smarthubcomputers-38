@@ -43,7 +43,32 @@ const Products = () => {
     const categoryParam = searchParams.get('category');
     const searchParam = searchParams.get('search');
     
-    if (categoryParam) setCategory(categoryParam);
+    // Set category based on URL path
+    const path = window.location.pathname;
+    const categoryFromPath = path.substring(1); // Remove leading slash
+    
+    if (categoryFromPath && categoryFromPath !== 'products') {
+      // Map URL paths to database categories
+      const categoryMap: { [key: string]: string } = {
+        'laptops': 'laptops',
+        'desktops': 'desktops', 
+        'components': 'components',
+        'peripherals': 'peripherals',
+        'gaming': 'gaming',
+        'audio': 'audio',
+        'printers': 'printers',
+        'phones': 'phones',
+        'refurbished-phones': 'refurbished phones'
+      };
+      
+      const mappedCategory = categoryMap[categoryFromPath];
+      if (mappedCategory) {
+        setCategory(mappedCategory);
+      }
+    } else if (categoryParam) {
+      setCategory(categoryParam);
+    }
+    
     if (searchParam) setSearchQuery(searchParam);
   }, [searchParams]);
 
