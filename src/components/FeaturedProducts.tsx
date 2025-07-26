@@ -186,7 +186,7 @@ const FeaturedProducts = () => {
 
         const transformedProducts = data?.map(product => ({
           ...product,
-          images: product.images ? JSON.parse(product.images) : ['/placeholder-product.jpg'],
+          images: Array.isArray(product.images) ? product.images : (product.images ? [product.images] : ['/placeholder-product.jpg']),
           original_price: product.original_price || null,
           rating: product.rating || 5,
           reviews_count: product.reviews_count || 0,
