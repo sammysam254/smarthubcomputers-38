@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +46,7 @@ interface Product {
 const Index = () => {
   const { user } = useAuth();
   const { isAdmin, fetchPromotions } = useAdmin();
+  const navigate = useNavigate();
   const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -339,33 +340,23 @@ const Index = () => {
                         <Card className="group hover:shadow-lg transition-all duration-300 border-2 border-primary/20 hover:border-primary/40 h-full flex flex-col">
                           <CardContent className="p-0 flex flex-col flex-grow">
                             <div className="relative flex-grow">
-                              {/* Product images display */}
+                              {/* Product images display - Show all as carousel */}
                               {promotion.products && promotion.products.length > 0 ? (
                                 <div className="h-48 rounded-t-lg overflow-hidden relative">
-                                  {promotion.products.length === 1 ? (
-                                    <img 
-                                      src={getProductImage(promotion.products[0])} 
-                                      alt={promotion.products[0].name}
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="grid grid-cols-2 h-full gap-1">
-                                      {promotion.products.slice(0, 4).map((product, idx) => (
-                                        <img 
-                                          key={product.id}
-                                          src={getProductImage(product)} 
-                                          alt={product.name}
-                                          className="w-full h-full object-cover"
-                                          onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
-                                          }}
-                                        />
-                                      ))}
-                                    </div>
-                                  )}
+                                  <div className="flex h-full">
+                                    {promotion.products.map((product, idx) => (
+                                      <img 
+                                        key={product.id}
+                                        src={getProductImage(product)} 
+                                        alt={product.name}
+                                        className="w-full h-full object-cover flex-shrink-0"
+                                        style={{ minWidth: '100%' }}
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
                                   {promotion.discount_percentage && (
                                     <Badge className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 animate-pulse">
                                       {promotion.discount_percentage}% OFF
@@ -405,7 +396,24 @@ const Index = () => {
                                 </p>
                               )}
                               
-                              <Button className="w-full">
+                              <Button 
+                                className="w-full"
+                                onClick={() => {
+                                  if (promotion.products && promotion.products.length > 0) {
+                                    if (promotion.products.length === 1) {
+                                      navigate(`/products/${promotion.products[0].id}`);
+                                    } else {
+                                      // Navigate to products page with promotion filter
+                                      navigate('/products', { 
+                                        state: { 
+                                          promotionProducts: promotion.products,
+                                          promotionTitle: promotion.title 
+                                        } 
+                                      });
+                                    }
+                                  }
+                                }}
+                              >
                                 Shop Now
                               </Button>
                             </div>
