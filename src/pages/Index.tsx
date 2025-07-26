@@ -340,23 +340,55 @@ const Index = () => {
                         <Card className="group hover:shadow-lg transition-all duration-300 border-2 border-primary/20 hover:border-primary/40 h-full flex flex-col">
                           <CardContent className="p-0 flex flex-col flex-grow">
                             <div className="relative flex-grow">
-                              {/* Product images display - Show all as carousel */}
+                              {/* Product images carousel */}
                               {promotion.products && promotion.products.length > 0 ? (
                                 <div className="h-48 rounded-t-lg overflow-hidden relative">
-                                  <div className="flex h-full">
-                                    {promotion.products.map((product, idx) => (
-                                      <img 
-                                        key={product.id}
-                                        src={getProductImage(product)} 
-                                        alt={product.name}
-                                        className="w-full h-full object-cover flex-shrink-0"
-                                        style={{ minWidth: '100%' }}
-                                        onError={(e) => {
-                                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                                  {promotion.products.length === 1 ? (
+                                    <img 
+                                      src={getProductImage(promotion.products[0])} 
+                                      alt={promotion.products[0].name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="relative w-full h-full">
+                                      <div 
+                                        className="flex transition-transform duration-500 ease-in-out h-full"
+                                        style={{ 
+                                          transform: `translateX(-${(currentSlide * 100) % (promotion.products.length * 100)}%)`,
+                                          width: `${promotion.products.length * 100}%`
                                         }}
-                                      />
-                                    ))}
-                                  </div>
+                                      >
+                                        {promotion.products.map((product, idx) => (
+                                          <div key={product.id} className="w-full h-full flex-shrink-0" style={{ width: `${100 / promotion.products.length}%` }}>
+                                            <img 
+                                              src={getProductImage(product)} 
+                                              alt={product.name}
+                                              className="w-full h-full object-cover"
+                                              onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                                              }}
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {/* Image navigation dots */}
+                                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
+                                        {promotion.products.map((_, idx) => (
+                                          <div
+                                            key={idx}
+                                            className={`w-2 h-2 rounded-full ${
+                                              idx === (currentSlide % promotion.products.length) 
+                                                ? 'bg-white' 
+                                                : 'bg-white/50'
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                   {promotion.discount_percentage && (
                                     <Badge className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 animate-pulse">
                                       {promotion.discount_percentage}% OFF
