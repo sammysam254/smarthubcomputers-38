@@ -12,6 +12,7 @@ import { Play, Zap, Upload, X, Plus } from 'lucide-react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
 
 // Lazy load heavy components for better performance
 const Categories = lazy(() => import('@/components/Categories'));
@@ -29,13 +30,17 @@ interface Promotion {
   created_at: string | null;
   updated_at: string | null;
   created_by: string | null;
+  product_ids: string[] | null;
+  products?: Product[];
 }
 
 interface Product {
   id: string;
   name: string;
-  image_url: string;
+  images: string;
+  image_urls: string;
   price: number;
+  category: string;
 }
 
 const Index = () => {
@@ -77,7 +82,23 @@ const Index = () => {
     try {
       const promotions = await fetchPromotions();
       const active = promotions.filter((promo: any) => promo.active);
-      setActivePromotions(active);
+      
+      // Fetch product details for each promotion
+      const promotionsWithProducts = await Promise.all(
+        active.map(async (promo: any) => {
+          if (promo.product_ids && promo.product_ids.length > 0) {
+            const { data: products } = await supabase
+              .from('products')
+              .select('id, name, images, image_urls, price, category')
+              .in('id', promo.product_ids);
+            
+            return { ...promo, products: products || [] };
+          }
+          return promo;
+        })
+      );
+      
+      setActivePromotions(promotionsWithProducts);
     } catch (error) {
       console.error('Error loading promotions:', error);
     }
@@ -85,10 +106,12 @@ const Index = () => {
 
   const fetchProducts = async () => {
     try {
-      // Replace with your actual products fetch API
-      const response = await fetch('/api/products');
-      const data = await response.json();
-      setProducts(data);
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name, images, image_urls, price, category')
+        .order('created_at', { ascending: false });
+      
+      setProducts(products || []);
     } catch (error) {
       console.error('Error loading products:', error);
     }
@@ -296,43 +319,101 @@ const Index = () => {
                   className="flex transition-transform duration-500 ease-in-out w-full"
                   style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                 >
-                  {activePromotions.map((promotion) => (
-                    <div key={promotion.id} className="w-full flex-shrink-0 px-4">
-                      <Card className="group hover:shadow-lg transition-all duration-300 border-2 border-primary/20 hover:border-primary/40 h-full flex flex-col">
-                        <CardContent className="p-0 flex flex-col flex-grow">
-                          <div className="relative flex-grow">
-                            {/* Promotional content */}
-                            <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-t-lg flex items-center justify-center">
-                              <div className="text-center">
-                                <Zap className="h-12 w-12 text-primary mx-auto mb-2" />
-                                <p className="text-sm text-muted-foreground">Promotional Content</p>
-                                {promotion.discount_percentage && (
-                                  <Badge className="bg-red-500 hover:bg-red-600 animate-pulse mt-2">
-                                    {promotion.discount_percentage}% OFF
-                                  </Badge>
-                                )}
-                              </div>
+                  {activePromotions.map((promotion) => {
+                    const getProductImage = (product: Product) => {
+                      try {
+                        const imagesArray = JSON.parse(product.images || '[]');
+                        if (imagesArray.length > 0) return imagesArray[0];
+                        
+                        const imageUrlsArray = JSON.parse(product.image_urls || '[]');
+                        if (imageUrlsArray.length > 0) return imageUrlsArray[0];
+                        
+                        return 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                      } catch {
+                        return 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                      }
+                    };
+
+                    return (
+                      <div key={promotion.id} className="w-full flex-shrink-0 px-4">
+                        <Card className="group hover:shadow-lg transition-all duration-300 border-2 border-primary/20 hover:border-primary/40 h-full flex flex-col">
+                          <CardContent className="p-0 flex flex-col flex-grow">
+                            <div className="relative flex-grow">
+                              {/* Product images display */}
+                              {promotion.products && promotion.products.length > 0 ? (
+                                <div className="h-48 rounded-t-lg overflow-hidden relative">
+                                  {promotion.products.length === 1 ? (
+                                    <img 
+                                      src={getProductImage(promotion.products[0])} 
+                                      alt={promotion.products[0].name}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="grid grid-cols-2 h-full gap-1">
+                                      {promotion.products.slice(0, 4).map((product, idx) => (
+                                        <img 
+                                          key={product.id}
+                                          src={getProductImage(product)} 
+                                          alt={product.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                  {promotion.discount_percentage && (
+                                    <Badge className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 animate-pulse">
+                                      {promotion.discount_percentage}% OFF
+                                    </Badge>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 rounded-t-lg flex items-center justify-center">
+                                  <div className="text-center">
+                                    <Zap className="h-12 w-12 text-primary mx-auto mb-2" />
+                                    <p className="text-sm text-muted-foreground">Promotional Content</p>
+                                    {promotion.discount_percentage && (
+                                      <Badge className="bg-red-500 hover:bg-red-600 animate-pulse mt-2">
+                                        {promotion.discount_percentage}% OFF
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                          
-                          <div className="p-6">
-                            <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                              {promotion.title}
-                            </h3>
-                            {promotion.description && (
-                              <p className="text-muted-foreground text-sm mb-4">
-                                {promotion.description}
-                              </p>
-                            )}
                             
-                            <Button className="w-full">
-                              Learn More
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
+                            <div className="p-6">
+                              <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                                {promotion.title}
+                              </h3>
+                              {promotion.description && (
+                                <p className="text-muted-foreground text-sm mb-4">
+                                  {promotion.description}
+                                </p>
+                              )}
+                              {promotion.products && promotion.products.length > 0 && (
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  {promotion.products.length === 1 
+                                    ? promotion.products[0].name
+                                    : `${promotion.products.length} products on sale`
+                                  }
+                                </p>
+                              )}
+                              
+                              <Button className="w-full">
+                                Shop Now
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               
