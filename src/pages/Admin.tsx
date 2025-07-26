@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
@@ -8,18 +8,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { LogOut, Package, ShoppingCart, MessageSquare, Users, Megaphone, Zap, Ticket, Smartphone, Headphones, CreditCard, Menu, X, ChevronDown, FileText } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import ProductsManager from '@/components/admin/ProductsManager';
-import OrdersManager from '@/components/admin/OrdersManager';
-import MessagesManager from '@/components/admin/MessagesManager';
-import UsersManager from '@/components/admin/UsersManager';
-import PromotionsManager from '@/components/admin/PromotionsManager';
-import FlashSalesManager from '@/components/admin/FlashSalesManager';
-import VouchersManager from '@/components/admin/VouchersManager';
-import MpesaPaymentsManager from '@/components/admin/MpesaPaymentsManager';
-import MpesaConfirmationManager from '@/components/admin/MpesaConfirmationManager';
-import NcbaLoopPaymentsManager from '@/components/admin/NcbaLoopPaymentsManager';
-import SupportTicketsManager from '@/components/admin/SupportTicketsManager';
-import ReceiptGenerator from '@/components/admin/ReceiptGenerator';
+
+// Lazy load admin components for better performance
+const ProductsManager = lazy(() => import('@/components/admin/ProductsManager'));
+const OrdersManager = lazy(() => import('@/components/admin/OrdersManager'));
+const MessagesManager = lazy(() => import('@/components/admin/MessagesManager'));
+const UsersManager = lazy(() => import('@/components/admin/UsersManager'));
+const PromotionsManager = lazy(() => import('@/components/admin/PromotionsManager'));
+const FlashSalesManager = lazy(() => import('@/components/admin/FlashSalesManager'));
+const VouchersManager = lazy(() => import('@/components/admin/VouchersManager'));
+const MpesaPaymentsManager = lazy(() => import('@/components/admin/MpesaPaymentsManager'));
+const MpesaConfirmationManager = lazy(() => import('@/components/admin/MpesaConfirmationManager'));
+const NcbaLoopPaymentsManager = lazy(() => import('@/components/admin/NcbaLoopPaymentsManager'));
+const SupportTicketsManager = lazy(() => import('@/components/admin/SupportTicketsManager'));
+const ReceiptGenerator = lazy(() => import('@/components/admin/ReceiptGenerator'));
 import { toast } from 'sonner';
 
 const Admin = () => {
@@ -238,7 +240,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ProductsManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <ProductsManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -252,7 +256,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <OrdersManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <OrdersManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -266,7 +272,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ReceiptGenerator />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <ReceiptGenerator />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -280,7 +288,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <FlashSalesManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <FlashSalesManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -294,7 +304,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <VouchersManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <VouchersManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -308,7 +320,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <MpesaPaymentsManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <MpesaPaymentsManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -322,7 +336,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <MpesaConfirmationManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <MpesaConfirmationManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -336,7 +352,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <NcbaLoopPaymentsManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <NcbaLoopPaymentsManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -350,7 +368,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <MessagesManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <MessagesManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -364,7 +384,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <UsersManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <UsersManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -378,7 +400,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PromotionsManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <PromotionsManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
@@ -392,7 +416,9 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <SupportTicketsManager />
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <SupportTicketsManager />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
