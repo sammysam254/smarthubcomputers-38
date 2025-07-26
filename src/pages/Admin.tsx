@@ -6,7 +6,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, ShoppingCart, MessageSquare, Users, Megaphone, Zap, Ticket, Smartphone, Headphones, CreditCard, Menu, X, ChevronDown } from 'lucide-react';
+import { LogOut, Package, ShoppingCart, MessageSquare, Users, Megaphone, Zap, Ticket, Smartphone, Headphones, CreditCard, Menu, X, ChevronDown, FileText } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import ProductsManager from '@/components/admin/ProductsManager';
 import OrdersManager from '@/components/admin/OrdersManager';
@@ -19,6 +19,7 @@ import MpesaPaymentsManager from '@/components/admin/MpesaPaymentsManager';
 import MpesaConfirmationManager from '@/components/admin/MpesaConfirmationManager';
 import NcbaLoopPaymentsManager from '@/components/admin/NcbaLoopPaymentsManager';
 import SupportTicketsManager from '@/components/admin/SupportTicketsManager';
+import ReceiptGenerator from '@/components/admin/ReceiptGenerator';
 import { toast } from 'sonner';
 
 const Admin = () => {
@@ -31,6 +32,7 @@ const Admin = () => {
   const tabOptions = [
     { value: "products", label: "Products", icon: Package },
     { value: "orders", label: "Orders", icon: ShoppingCart },
+    { value: "receipts", label: "Receipts", icon: FileText },
     { value: "flash-sales", label: "Flash Sales", icon: Zap },
     { value: "vouchers", label: "Vouchers", icon: Ticket },
     { value: "mpesa", label: "M-Pesa", icon: Smartphone },
@@ -251,6 +253,20 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <OrdersManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="receipts">
+            <Card>
+              <CardHeader>
+                <CardTitle>Receipt Generator</CardTitle>
+                <CardDescription>
+                  Generate delivery receipts for customers with MPesa confirmation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReceiptGenerator />
               </CardContent>
             </Card>
           </TabsContent>
