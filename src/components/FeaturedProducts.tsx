@@ -11,12 +11,12 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  description: string; // Added description
-  images: string[]; // Changed to array of images
+  description: string;
+  images: string[];
   original_price: number | null;
   rating: number;
   reviews_count: number;
-  specifications?: Record<string, string>; // Added specifications
+  specifications?: Record<string, string>;
   badge: string | null;
   badge_color: string | null;
   in_stock: boolean;
@@ -27,103 +27,106 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
   product: Product;
   onAddToCart: (product: Product) => void;
   onViewDetails: (productId: string) => void;
-}) => (
-  <div className="group w-full text-left">
-    <Card 
-      className="hover:shadow-card transition-all duration-300 hover:-translate-y-2 bg-background border-border/50 hover:border-primary/30 h-full cursor-pointer"
-      onClick={() => onViewDetails(product.id)}
-    >
-      <CardContent className="p-0">
-        <div className="relative overflow-hidden rounded-t-lg aspect-[4/3]">
-          <img 
-            src={product.images && product.images.length > 0 ? product.images[0] : '/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png'} 
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-            decoding="async"
-            width={400}
-            height={300}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = '/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png';
-            }}
-          />
-          
-          {product.badge && (
-            <Badge className={`absolute top-3 left-3 ${product.badge_color || 'bg-primary'} text-white`}>
-              {product.badge}
-            </Badge>
-          )}
+}) => {
+  // Only render if product has images
+  if (!product.images || product.images.length === 0) {
+    return null;
+  }
 
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-2">
+  return (
+    <div className="group w-full text-left">
+      <Card 
+        className="hover:shadow-card transition-all duration-300 hover:-translate-y-2 bg-background border-border/50 hover:border-primary/30 h-full cursor-pointer"
+        onClick={() => onViewDetails(product.id)}
+      >
+        <CardContent className="p-0">
+          <div className="relative overflow-hidden rounded-t-lg aspect-[4/3]">
+            <img 
+              src={product.images[0]} 
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              decoding="async"
+              width={400}
+              height={300}
+            />
+            
+            {product.badge && (
+              <Badge className={`absolute top-3 left-3 ${product.badge_color || 'bg-primary'} text-white`}>
+                {product.badge}
+              </Badge>
+            )}
+
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-2">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails(product.id);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="tech" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToCart(product);
+                }}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-3">
+            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-2">
+              {product.name}
+            </h3>
+
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-4 w-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {product.rating} ({product.reviews_count})
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl font-bold text-primary">
+                KES {product.price.toLocaleString()}
+              </span>
+              {product.original_price && (
+                <span className="text-sm text-muted-foreground line-through">
+                  KES {product.original_price.toLocaleString()}
+                </span>
+              )}
+            </div>
+
             <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails(product.id);
-              }}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="tech" 
-              size="sm" 
+              variant="cart" 
+              className="w-full"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToCart(product);
               }}
             >
-              <ShoppingCart className="h-4 w-4" />
+              Add to Cart
             </Button>
           </div>
-        </div>
-
-        <div className="p-4 space-y-3">
-          <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-2">
-            {product.name}
-          </h3>
-
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <Star 
-                  key={i} 
-                  className={`h-4 w-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                />
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">
-              {product.rating} ({product.reviews_count})
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-primary">
-              KES {product.price.toLocaleString()}
-            </span>
-            {product.original_price && (
-              <span className="text-sm text-muted-foreground line-through">
-                KES {product.original_price.toLocaleString()}
-              </span>
-            )}
-          </div>
-
-          <Button 
-            variant="cart" 
-            className="w-full"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart(product);
-            }}
-          >
-            Add to Cart
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-));
+        </CardContent>
+      </Card>
+    </div>
+  );
+});
 
 ProductCard.displayName = 'ProductCard';
 
@@ -177,7 +180,6 @@ const FeaturedProducts = () => {
           `)
           .eq('in_stock', true)
           .is('deleted_at', null)
-          .limit(4)
           .order('created_at', { ascending: false });
 
         clearTimeout(timeout);
@@ -185,44 +187,50 @@ const FeaturedProducts = () => {
         if (!isMounted) return;
         if (error) throw error;
 
-        const transformedProducts = data?.map(product => {
-          let imageUrls: string[] = [];
-          
-          // Try image_urls first, then images, then fallback
-          if (product.image_urls) {
-            try {
-              imageUrls = JSON.parse(product.image_urls);
-              if (!Array.isArray(imageUrls)) {
+        const transformedProducts = data
+          ?.map(product => {
+            let imageUrls: string[] = [];
+            
+            // Try image_urls first, then images
+            if (product.image_urls) {
+              try {
+                imageUrls = JSON.parse(product.image_urls);
+                if (!Array.isArray(imageUrls)) {
+                  imageUrls = [product.image_urls];
+                }
+              } catch {
                 imageUrls = [product.image_urls];
               }
-            } catch {
-              imageUrls = [product.image_urls];
-            }
-          } else if (product.images) {
-            try {
-              imageUrls = JSON.parse(product.images);
-              if (!Array.isArray(imageUrls)) {
+            } else if (product.images) {
+              try {
+                imageUrls = JSON.parse(product.images);
+                if (!Array.isArray(imageUrls)) {
+                  imageUrls = [product.images];
+                }
+              } catch {
                 imageUrls = [product.images];
               }
-            } catch {
-              imageUrls = [product.images];
             }
-          } else {
-            imageUrls = ['/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png'];
-          }
 
-          return {
-            ...product,
-            images: imageUrls,
-            original_price: product.original_price || null,
-            rating: product.rating || 5,
-            reviews_count: product.reviews_count || 0,
-            badge: product.badge || null,
-            badge_color: product.badge_color || null,
-            in_stock: product.in_stock !== false,
-            category: product.category || 'Electronics'
-          };
-        }) || [];
+            // Filter out any empty or invalid image URLs
+            imageUrls = imageUrls.filter(url => url && !url.includes('lovable-uploads'));
+
+            return {
+              ...product,
+              images: imageUrls,
+              original_price: product.original_price || null,
+              rating: product.rating || 5,
+              reviews_count: product.reviews_count || 0,
+              badge: product.badge || null,
+              badge_color: product.badge_color || null,
+              in_stock: product.in_stock !== false,
+              category: product.category || 'Electronics'
+            };
+          })
+          // Only include products with at least one valid image
+          .filter(product => product.images && product.images.length > 0)
+          // Take the first 4 products with valid images
+          .slice(0, 4) || [];
 
         if (isMounted) {
           setProducts(transformedProducts);
@@ -301,22 +309,30 @@ const FeaturedProducts = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {products.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onAddToCart={handleAddToCart}
-              onViewDetails={handleViewDetails}
-            />
-          ))}
-        </div>
+        {products.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {products.map((product) => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onAddToCart={handleAddToCart}
+                  onViewDetails={handleViewDetails}
+                />
+              ))}
+            </div>
 
-        <div className="text-center mt-12">
-          <Button variant="outline" size="lg" onClick={handleViewAll}>
-            View All Products
-          </Button>
-        </div>
+            <div className="text-center mt-12">
+              <Button variant="outline" size="lg" onClick={handleViewAll}>
+                View All Products
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No featured products available at the moment.</p>
+          </div>
+        )}
       </div>
     </section>
   );
