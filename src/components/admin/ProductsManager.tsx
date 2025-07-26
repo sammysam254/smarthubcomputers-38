@@ -121,8 +121,8 @@ const ProductsManager = () => {
         price: parseFloat(formData.price),
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
         category: formData.category,
-        image_urls: JSON.stringify(base64Images),
-        images: JSON.stringify(base64Images), // Add images field to match the new column
+        image_urls: JSON.stringify(base64Images), // Keep for backward compatibility
+        images: JSON.stringify(base64Images), // Save to images field
         badge: formData.badge,
         badge_color: formData.badge_color,
         rating: parseFloat(formData.rating),
@@ -166,7 +166,7 @@ const ProductsManager = () => {
     
     // Parse existing images
     try {
-      const existingImages = product.image_urls ? JSON.parse(product.image_urls) : [];
+      const existingImages = product.images ? JSON.parse(product.images) : [];
       setPreviewImages(existingImages);
     } catch (error) {
       console.error('Error parsing existing images:', error);
