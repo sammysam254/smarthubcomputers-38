@@ -55,7 +55,7 @@ const PromotionProductCarousel = ({ products }: PromotionProductCarouselProps) =
     
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % products.length);
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [products.length]);
