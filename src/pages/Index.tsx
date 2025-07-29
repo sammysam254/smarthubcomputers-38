@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,6 +14,7 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import AdsSection from '@/components/AdsSection';
 import Footer from '@/components/Footer';
+import InternalLinksSection from '@/components/InternalLinksSection';
 import { supabase } from '@/integrations/supabase/client';
 
 // Lazy load heavy components for better performance
@@ -251,8 +253,43 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <>
+      <Helmet>
+        <title>SmartHub Computers - Best Computer Store in Kenya | Laptops, Desktops & Tech</title>
+        <meta name="description" content="Kenya's leading computer store offering laptops, desktops, gaming PCs, and tech accessories. Best prices, expert service, and genuine products with warranty in Nairobi." />
+        <meta name="keywords" content="computers Kenya, laptops Nairobi, gaming PCs, desktop computers, computer store Kenya, tech accessories, computer shop Nairobi" />
+        <meta property="og:title" content="SmartHub Computers - Best Computer Store in Kenya" />
+        <meta property="og:description" content="Kenya's leading computer store offering laptops, desktops, gaming PCs, and tech accessories with best prices and expert service." />
+        <meta property="og:url" content="https://smarthubcomputers.com/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://smarthubcomputers.com/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png" />
+        <link rel="canonical" href="https://smarthubcomputers.com/" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Store",
+            "name": "SmartHub Computers",
+            "description": "Kenya's leading computer store offering laptops, desktops, gaming PCs, and tech accessories",
+            "url": "https://smarthubcomputers.com/",
+            "logo": "https://smarthubcomputers.com/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Koinange Street Uniafric House Room 208",
+              "addressLocality": "Nairobi",
+              "addressCountry": "KE"
+            },
+            "telephone": "0704144239",
+            "email": "support@smarthubcomputers.com",
+            "sameAs": [
+              "https://www.facebook.com/SmarthubComputersKE",
+              "https://www.instagram.com/SmarthubKE",
+              "https://twitter.com/SmarthubKE"
+            ]
+          })}
+        </script>
+      </Helmet>
+      <div className="min-h-screen bg-background">
+        <Header />
       <main>
         <AdsSection />
         <Hero />
@@ -554,8 +591,9 @@ const Index = () => {
         </Suspense>
 
       </main>
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   );
 };
 

@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -88,37 +88,83 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Product Categories */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg">Quick Links</h4>
+            <h4 className="font-semibold text-lg">Product Categories</h4>
             <ul className="space-y-2">
-              {["Laptops", "Desktops", "Components", "Gaming", "Accessories", "Support"].map((link) => (
-                <li key={link}>
-                  <button 
-                    onClick={() => handleQuickLinkClick(link)}
-                    className="text-background/80 hover:text-background transition-colors text-sm text-left"
-                  >
-                    {link}
-                  </button>
-                </li>
-              ))}
+              <li>
+                <Link to="/laptops" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Premium Gaming Laptops
+                </Link>
+              </li>
+              <li>
+                <Link to="/desktops" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Custom Desktop PCs
+                </Link>
+              </li>
+              <li>
+                <Link to="/components" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Computer Hardware Components
+                </Link>
+              </li>
+              <li>
+                <Link to="/gaming" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Professional Gaming Equipment
+                </Link>
+              </li>
+              <li>
+                <Link to="/peripherals" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Computer Accessories & Devices
+                </Link>
+              </li>
+              <li>
+                <Link to="/phones" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Latest Smartphones & Mobile Devices
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* Shopping & Services */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg">Customer Service</h4>
+            <h4 className="font-semibold text-lg">Shopping & Services</h4>
             <ul className="space-y-2">
-              {["Contact Us", "Shipping Info", "Returns", "Warranty", "FAQ", "Live Chat"].map((link) => (
-                <li key={link}>
-                  <button 
-                    onClick={() => handleCustomerServiceClick(link)}
-                    className="text-background/80 hover:text-background transition-colors text-sm text-left"
-                  >
-                    {link}
-                  </button>
-                </li>
-              ))}
+              <li>
+                <Link to="/flash-sales" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Flash Sales & Special Offers
+                </Link>
+              </li>
+              <li>
+                <Link to="/cart" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Shopping Cart & Checkout
+                </Link>
+              </li>
+              <li>
+                <Link to="/my-orders" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Track Your Orders
+                </Link>
+              </li>
+              <li>
+                <Link to="/auth" className="text-background/80 hover:text-background transition-colors text-sm">
+                  Customer Login & Registration
+                </Link>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleCustomerServiceClick("Contact Us")}
+                  className="text-background/80 hover:text-background transition-colors text-sm text-left"
+                >
+                  Expert Technical Support
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => handleCustomerServiceClick("Warranty")}
+                  className="text-background/80 hover:text-background transition-colors text-sm text-left"
+                >
+                  Warranty & Repair Services
+                </button>
+              </li>
             </ul>
           </div>
 

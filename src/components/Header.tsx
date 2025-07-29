@@ -34,20 +34,32 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-foreground hover:text-primary transition-colors">
-              Home
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link to="/" className="text-foreground hover:text-primary transition-colors font-medium">
+              Computer Store Homepage
             </Link>
-            <Link to="/products" className="text-foreground hover:text-primary transition-colors">
-              Products
-            </Link>
-            <Link to="/flash-sales" className="text-foreground hover:text-primary transition-colors">
-              Flash Sales
+            <div className="relative group">
+              <Link to="/products" className="text-foreground hover:text-primary transition-colors font-medium">
+                Browse All Products
+              </Link>
+              <div className="absolute top-full left-0 mt-2 w-48 bg-background border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="p-2 space-y-1">
+                  <Link to="/laptops" className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded">Premium Laptops</Link>
+                  <Link to="/desktops" className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded">Desktop Computers</Link>
+                  <Link to="/gaming" className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded">Gaming Equipment</Link>
+                  <Link to="/components" className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded">PC Components</Link>
+                  <Link to="/peripherals" className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded">Computer Accessories</Link>
+                  <Link to="/phones" className="block px-3 py-2 text-sm text-foreground hover:bg-muted rounded">Smartphones</Link>
+                </div>
+              </div>
+            </div>
+            <Link to="/flash-sales" className="text-foreground hover:text-primary transition-colors font-medium">
+              Limited Time Deals
             </Link>
             {user && (
-              <Link to="/my-orders" className="text-foreground hover:text-primary transition-colors flex items-center space-x-1">
+              <Link to="/my-orders" className="text-foreground hover:text-primary transition-colors flex items-center space-x-1 font-medium">
                 <Package className="h-4 w-4" />
-                <span>My Orders</span>
+                <span>Order History</span>
               </Link>
             )}
           </nav>

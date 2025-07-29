@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAdmin, FlashSale } from '@/hooks/useAdmin';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, ShoppingCart } from 'lucide-react';
+import { Clock, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 interface FlashSaleWithProduct extends FlashSale {
   product?: {
@@ -144,9 +148,50 @@ const FlashSales = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+    <>
+      <Helmet>
+        <title>Flash Sales - SmartHub Computers | Limited Time Computer Deals Kenya</title>
+        <meta name="description" content="Grab amazing deals on computers, laptops, and tech accessories with our flash sales. Limited time offers with huge discounts at SmartHub Computers Kenya." />
+        <meta name="keywords" content="flash sales Kenya, computer deals, laptop offers, tech discounts, limited time offers, SmartHub Computers sales" />
+        <meta property="og:title" content="Flash Sales - SmartHub Computers | Limited Time Deals" />
+        <meta property="og:description" content="Amazing flash sales on computers and laptops with huge discounts. Limited time offers at SmartHub Computers Kenya." />
+        <meta property="og:url" content="https://smarthubcomputers.com/flash-sales" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://smarthubcomputers.com/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png" />
+        <link rel="canonical" href="https://smarthubcomputers.com/flash-sales" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Store",
+            "name": "SmartHub Computers Flash Sales",
+            "description": "Limited time flash sales on computers, laptops, and tech accessories",
+            "url": "https://smarthubcomputers.com/flash-sales",
+            "parentOrganization": {
+              "@type": "Store",
+              "name": "SmartHub Computers"
+            }
+          })}
+        </script>
+      </Helmet>
+      
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <main className="py-8">
+          <div className="container mx-auto px-4">
+            
+            {/* Breadcrumb Navigation */}
+            <nav className="mb-6" aria-label="Breadcrumb">
+              <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <li>
+                  <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+                </li>
+                <li>/</li>
+                <li className="text-foreground font-medium">Flash Sales</li>
+              </ol>
+            </nav>
+
+            <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             ⚡ Flash Sales
           </h1>
@@ -249,9 +294,29 @@ const FlashSales = () => {
             ))}
           </div>
         )}
-      </div>
-    </div>
-  );
+        
+        {/* Related Links Section */}
+        <section className="mt-12 bg-muted/50 rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Explore More</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link to="/laptops" className="text-primary hover:underline text-sm">Gaming Laptops</Link>
+            <Link to="/desktops" className="text-primary hover:underline text-sm">Desktop Computers</Link>
+            <Link to="/components" className="text-primary hover:underline text-sm">PC Components</Link>
+            <Link to="/peripherals" className="text-primary hover:underline text-sm">Computer Accessories</Link>
+            <Link to="/phones" className="text-primary hover:underline text-sm">Smartphones</Link>
+            <Link to="/gaming" className="text-primary hover:underline text-sm">Gaming Equipment</Link>
+            <Link to="/audio" className="text-primary hover:underline text-sm">Audio Equipment</Link>
+            <Link to="/printers" className="text-primary hover:underline text-sm">Printers & Scanners</Link>
+          </div>
+        </section>
+        
+          </div>
+        </main>
+    
+    <Footer />
+  </div>
+</>
+);
 };
 
 export default FlashSales;
