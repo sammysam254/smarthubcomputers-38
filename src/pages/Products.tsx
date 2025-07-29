@@ -245,13 +245,24 @@ const Products = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4 animate-pulse bg-muted rounded h-12 w-64 mx-auto"></h1>
+            <div className="animate-pulse bg-muted rounded h-6 w-96 mx-auto"></div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-muted rounded-lg h-64 mb-4"></div>
-                <div className="bg-muted rounded h-4 mb-2"></div>
-                <div className="bg-muted rounded h-4 w-2/3"></div>
-              </div>
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/20 relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                  </div>
+                  <div className="p-2 md:p-4 space-y-2 md:space-y-3">
+                    <div className="h-4 md:h-5 bg-gradient-to-r from-muted via-muted/50 to-muted rounded animate-pulse"></div>
+                    <div className="h-3 md:h-4 bg-gradient-to-r from-muted via-muted/50 to-muted rounded w-3/4 animate-pulse"></div>
+                    <div className="h-8 md:h-10 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded animate-pulse"></div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
