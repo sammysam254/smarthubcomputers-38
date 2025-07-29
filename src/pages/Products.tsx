@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, ShoppingCart, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
+import { useProductsQuery } from '@/hooks/useProductsQuery';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductModal from '@/components/ProductModal';
+import ProductCard from '@/components/ProductCard';
 import SEOBreadcrumbs from '@/components/SEOBreadcrumbs';
 
 interface Product {
@@ -31,18 +31,13 @@ interface Product {
 }
 
 const Products = () => {
-  console.log('Products component is rendering');
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  console.log('Current location:', location.pathname);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const { addToCart } = useCart();
 
   // Category metadata for SEO
@@ -118,111 +113,18 @@ const Products = () => {
   const currentCategory = getCurrentCategory();
   const categoryInfo = categoryMeta[currentCategory as keyof typeof categoryMeta];
 
-  useEffect(() => {
-    const categoryParam = searchParams.get('category');
-    const searchParam = searchParams.get('search');
-    
-    // Set category based on URL path
-    if (currentCategory) {
-      setCategory(currentCategory);
-    } else if (categoryParam) {
-      setCategory(categoryParam);
-    }
-    
-    if (searchParam) setSearchQuery(searchParam);
-  }, [searchParams, currentCategory]);
+  // Use the optimized products query hook
+  const { products, loading, hasMore, fetchMore } = useProductsQuery({ category, sortBy });
 
-  useEffect(() => {
-    setProducts([]); // Clear products when filters change
-    fetchProducts();
-  }, [category, sortBy]);
-
-  const fetchProducts = async (loadMore = false) => {
-    console.log('fetchProducts called', { loadMore, category, sortBy, loading });
-    if (loading && loadMore) {
-      console.log('Skipping fetch - already loading and is loadMore');
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const offset = loadMore ? products.length : 0;
-      const limit = 12; // Optimized batch size
-      
-      console.log('Building query with', { offset, limit, category });
-      
-      // Ultra-optimized query with indexes
-      let query = supabase
-        .from('products')
-        .select('id, name, price, original_price, image_urls, rating, reviews_count, badge, badge_color, in_stock, category')
-        .eq('in_stock', true)
-        .is('deleted_at', null)
-        .not('image_urls', 'is', null)
-        .range(offset, offset + limit - 1);
-      
-      if (category !== 'all') {
-        query = query.eq('category', category);
-      }
-      
-      // Optimized sorting
-      switch (sortBy) {
-        case 'price_low':
-          query = query.order('price', { ascending: true });
-          break;
-        case 'price_high':
-          query = query.order('price', { ascending: false });
-          break;
-        case 'rating':
-          query = query.order('rating', { ascending: false });
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
-      }
-      
-      console.log('Executing query...');
-      const { data, error } = await query;
-      
-      console.log('Query result:', { data, error });
-      
-      if (error) throw error;
-      
-      // Fast transform with minimal processing
-      const transformedProducts = data?.map(product => {
-        let images = [];
-        try {
-          images = product.image_urls ? JSON.parse(product.image_urls) : [];
-          if (!Array.isArray(images)) images = [product.image_urls];
-        } catch (e) {
-          images = product.image_urls ? [product.image_urls] : [];
-        }
-        
-        return {
-          ...product,
-          image_url: images[0] || '',
-          images: images,
-          description: ''
-        };
-      }).filter(p => p.images.length > 0) || [];
-      
-      if (loadMore) {
-        setProducts(prev => [...prev, ...transformedProducts]);
-      } else {
-        setProducts(transformedProducts);
-      }
-      
-      setHasMore(transformedProducts.length === limit);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Memoized filtered products for lightning-fast search
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery) return products;
+    const query = searchQuery.toLowerCase();
+    return products.filter(product =>
+      product.name.toLowerCase().includes(query) ||
+      product.category.toLowerCase().includes(query)
+    );
+  }, [products, searchQuery]);
 
   const categories = [
     { value: 'all', label: 'All Categories' },
@@ -251,7 +153,21 @@ const Products = () => {
     setIsModalOpen(true);
   };
 
-  if (loading) {
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    const searchParam = searchParams.get('search');
+    
+    // Set category based on URL path
+    if (currentCategory) {
+      setCategory(currentCategory);
+    } else if (categoryParam) {
+      setCategory(categoryParam);
+    }
+    
+    if (searchParam) setSearchQuery(searchParam);
+  }, [searchParams, currentCategory]);
+
+  if (loading && products.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -329,166 +245,83 @@ const Products = () => {
             </p>
           </div>
 
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="price_low">Price: Low to High</SelectItem>
+                <SelectItem value="price_high">Price: High to Low</SelectItem>
+                <SelectItem value="rating">Rating</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat.value} value={cat.value}>
-                  {cat.label}
-                </SelectItem>
+
+          {/* Products Grid */}
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-semibold mb-2">No products found</h3>
+              <p className="text-muted-foreground">Try adjusting your search or filters</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                  onProductClick={handleProductClick}
+                />
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
           
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="price_low">Price: Low to High</SelectItem>
-              <SelectItem value="price_high">Price: High to Low</SelectItem>
-              <SelectItem value="rating">Rating</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Load More Button */}
+          {hasMore && !loading && filteredProducts.length > 0 && (
+            <div className="text-center mt-8">
+              <Button 
+                onClick={fetchMore} 
+                variant="outline"
+                className="min-w-32"
+              >
+                Load More Products
+              </Button>
+            </div>
+          )}
         </div>
-
-        {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold mb-2">No products found</h3>
-            <p className="text-muted-foreground">Try adjusting your search or filters</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="hover:shadow-card transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-0">
-                  <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                    <div className="relative w-full h-full bg-gray-100">
-                      <img
-                        src={product.images?.[0] || product.image_url || 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center'}
-                        alt={product.name}
-                        className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      
-                      {product.images?.length > 1 && (
-                        <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1">
-                          {product.images.map((_, index) => (
-                            <div
-                              key={index}
-                              className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${index === 0 ? 'bg-primary' : 'bg-gray-300'}`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {product.badge && (
-                      <Badge className={`absolute top-2 left-2 text-xs md:text-sm ${product.badge_color || 'bg-primary'} text-white`}>
-                        {product.badge}
-                      </Badge>
-                    )}
-                    
-                    {!product.in_stock && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-2 md:p-4 space-y-2 md:space-y-3">
-                    <h3 
-                      className="font-semibold text-sm md:text-lg line-clamp-2 cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => handleProductClick(product)}
-                    >
-                      {product.name}
-                    </h3>
-
-                    {/* Rating */}
-                    <div className="flex items-center space-x-1 md:space-x-2">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3 w-3 md:h-4 md:w-4 ${
-                              i < Math.floor(product.rating) 
-                                ? 'text-yellow-400 fill-current' 
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs md:text-sm text-muted-foreground">
-                        ({product.reviews_count})
-                      </span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="flex flex-col md:flex-row md:items-center md:space-x-2">
-                      <span className="text-base md:text-2xl font-bold text-primary">
-                        KES {product.price.toLocaleString()}
-                      </span>
-                      {product.original_price && (
-                        <span className="text-xs md:text-sm text-muted-foreground line-through">
-                          KES {product.original_price.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-
-                    <Button
-                      variant="cart"
-                      size="sm"
-                      className="w-full text-xs md:text-sm"
-                      onClick={() => handleAddToCart(product)}
-                      disabled={!product.in_stock}
-                    >
-                      <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                      {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
         
-        {/* Load More Button */}
-        {hasMore && !loading && filteredProducts.length > 0 && (
-          <div className="text-center mt-8">
-            <Button 
-              onClick={() => fetchProducts(true)} 
-              variant="outline"
-              className="min-w-32"
-            >
-              Load More Products
-            </Button>
-          </div>
-        )}
-      </div>
-      
-      <ProductModal
-        product={selectedProduct}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-      
+        <ProductModal
+          product={selectedProduct}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+        
         <Footer />
       </div>
     </>
