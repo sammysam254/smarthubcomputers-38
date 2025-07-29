@@ -31,8 +31,10 @@ interface Product {
 }
 
 const Products = () => {
+  console.log('Products component is rendering');
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  console.log('Current location:', location.pathname);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
