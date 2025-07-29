@@ -1,12 +1,13 @@
 
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, ShoppingCart, MessageSquare, Users, Megaphone, Zap, Ticket, Smartphone, Headphones, CreditCard, Menu, X, ChevronDown, FileText, Monitor } from 'lucide-react';
+import { LogOut, Package, ShoppingCart, MessageSquare, Users, Megaphone, Zap, Ticket, Smartphone, Headphones, CreditCard, Menu, X, ChevronDown, FileText, Monitor, Loader2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Lazy load admin components for better performance
@@ -24,6 +25,14 @@ const SupportTicketsManager = lazy(() => import('@/components/admin/SupportTicke
 const ReceiptGenerator = lazy(() => import('@/components/admin/ReceiptGenerator'));
 const AdsManager = lazy(() => import('@/components/admin/AdsManager'));
 import { toast } from 'sonner';
+
+// Optimized loading component
+const LoadingSpinner = memo(() => (
+  <div className="flex items-center justify-center p-8">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <span className="ml-2 text-muted-foreground">Loading...</span>
+  </div>
+));
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -70,7 +79,7 @@ const Admin = () => {
     }
   }, [user, isAdmin, loading, navigate]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       const { error } = await signOut();
       if (error) {
@@ -82,14 +91,14 @@ const Admin = () => {
     } catch (error) {
       toast.error('Failed to sign out');
     }
-  };
+  }, [signOut, navigate]);
 
-  // Show loading state while checking admin status
+  // Show optimized loading state while checking admin status
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
           <p className="mt-4 text-muted-foreground">Checking admin access...</p>
         </div>
       </div>
@@ -102,7 +111,15 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Admin Dashboard - SmartHub Computers</title>
+        <meta name="description" content="Admin dashboard for managing SmartHub Computers store. Manage products, orders, users and more." />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://smarthubcomputers.com/admin" />
+      </Helmet>
+      
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4">
@@ -242,7 +259,7 @@ const Admin = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                <Suspense fallback={<LoadingSpinner />}>
                   <ProductsManager />
                 </Suspense>
               </CardContent>
@@ -441,8 +458,9 @@ const Admin = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 };
 

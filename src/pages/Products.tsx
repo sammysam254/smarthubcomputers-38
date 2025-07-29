@@ -40,6 +40,7 @@ const Products = () => {
   const [sortBy, setSortBy] = useState('name');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const { addToCart } = useCart();
 
   // Category metadata for SEO
@@ -130,18 +131,25 @@ const Products = () => {
   }, [searchParams, currentCategory]);
 
   useEffect(() => {
+    setProducts([]); // Clear products when filters change
     fetchProducts();
   }, [category, sortBy]);
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = async (loadMore = false) => {
+    if (loading && !loadMore) return;
+    
+    setLoading(!loadMore);
+    
     try {
-      // Optimized query - only select needed fields and add pagination
+      const offset = loadMore ? products.length : 0;
+      const limit = 20; // Smaller batch size for faster loading
+      
+      // Optimized query - only select needed fields initially
       let query = supabase
         .from('products')
-        .select('id, name, price, original_price, image_urls, rating, reviews_count, badge, badge_color, in_stock, category, description')
+        .select('id, name, price, original_price, image_urls, rating, reviews_count, badge, badge_color, in_stock, category')
         .is('deleted_at', null)
-        .limit(50); // Add pagination limit for faster initial load
+        .range(offset, offset + limit - 1);
       
       if (category !== 'all') {
         query = query.eq('category', category);
@@ -174,11 +182,18 @@ const Products = () => {
         return {
           ...product,
           image_url: images[0] || 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center',
-          images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center']
+          images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center'],
+          description: '' // Only load description when needed
         };
       }) || [];
       
-      setProducts(transformedProducts);
+      if (loadMore) {
+        setProducts(prev => [...prev, ...transformedProducts]);
+      } else {
+        setProducts(transformedProducts);
+      }
+      
+      setHasMore(transformedProducts.length === limit);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -422,6 +437,19 @@ const Products = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+        
+        {/* Load More Button */}
+        {hasMore && !loading && filteredProducts.length > 0 && (
+          <div className="text-center mt-8">
+            <Button 
+              onClick={() => fetchProducts(true)} 
+              variant="outline"
+              className="min-w-32"
+            >
+              Load More Products
+            </Button>
           </div>
         )}
       </div>

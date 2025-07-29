@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { Tables } from '@/integrations/supabase/types';
@@ -26,49 +26,74 @@ export interface ExtendedUserProfile {
   email?: string;
 }
 
+// Cache for role to avoid repeated calls
+let roleCache: { role: string | null; timestamp: number; userId: string } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export const useAdmin = () => {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, [user]);
-
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     if (!user) {
       setIsAdmin(false);
       setLoading(false);
       return;
     }
 
+    // Check cache first
+    if (roleCache && 
+        roleCache.userId === user.id && 
+        (Date.now() - roleCache.timestamp) < CACHE_DURATION) {
+      setIsAdmin(roleCache.role === 'admin');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('user_id', user.id)
         .single();
 
-      setIsAdmin(data?.role === 'admin');
+      if (error) throw error;
+
+      const adminStatus = data?.role === 'admin';
+      
+      // Update cache
+      roleCache = {
+        role: data?.role || null,
+        timestamp: Date.now(),
+        userId: user.id
+      };
+
+      setIsAdmin(adminStatus);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  // Products
-  const fetchProducts = async (): Promise<Product[]> => {
+  useEffect(() => {
+    checkAdminStatus();
+  }, [checkAdminStatus]);
+
+  // Optimized Products with pagination
+  const fetchProducts = useCallback(async (limit = 50, offset = 0): Promise<Product[]> => {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return data || [];
-  };
+  }, []);
 
   const createProduct = async (productData: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     const { data, error } = await supabase
@@ -105,16 +130,17 @@ export const useAdmin = () => {
     if (error) throw error;
   };
 
-  // Orders
-  const fetchOrders = async (): Promise<Order[]> => {
+  // Optimized Orders with pagination
+  const fetchOrders = useCallback(async (limit = 50, offset = 0): Promise<Order[]> => {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return data || [];
-  };
+  }, []);
 
   const makeUserAdmin = async (userId: string) => {
     // First check if user has a profile
@@ -256,16 +282,17 @@ export const useAdmin = () => {
     if (error) throw error;
   };
 
-  // Flash Sales
-  const fetchFlashSales = async (): Promise<FlashSale[]> => {
+  // Optimized Flash Sales with pagination
+  const fetchFlashSales = useCallback(async (limit = 20, offset = 0): Promise<FlashSale[]> => {
     const { data, error } = await supabase
       .from('flash_sales')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return data || [];
-  };
+  }, []);
 
   const createFlashSale = async (flashSaleData: Omit<FlashSale, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     const { data, error } = await supabase
@@ -302,16 +329,17 @@ export const useAdmin = () => {
     if (error) throw error;
   };
 
-  // Promotions
-  const fetchPromotions = async (): Promise<Promotion[]> => {
+  // Optimized Promotions with pagination  
+  const fetchPromotions = useCallback(async (limit = 20, offset = 0): Promise<Promotion[]> => {
     const { data, error } = await supabase
       .from('promotions')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
     return data || [];
-  };
+  }, []);
 
   const createPromotion = async (promotionData: Omit<Promotion, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     const { data, error } = await supabase
@@ -409,7 +437,8 @@ export const useAdmin = () => {
     if (error) throw error;
   };
 
-  return {
+  // Memoized return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     isAdmin,
     loading,
     // Products
@@ -448,5 +477,15 @@ export const useAdmin = () => {
     // User management
     makeUserAdmin,
     removeUserAdmin,
-  };
+    // Utility
+    refreshAdminStatus: checkAdminStatus
+  }), [
+    isAdmin,
+    loading,
+    fetchProducts,
+    fetchOrders,
+    fetchFlashSales,
+    fetchPromotions,
+    checkAdminStatus
+  ]);
 };
