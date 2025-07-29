@@ -138,13 +138,19 @@ const Products = () => {
   }, [category, sortBy]);
 
   const fetchProducts = async (loadMore = false) => {
-    if (loading && !loadMore) return;
+    console.log('fetchProducts called', { loadMore, category, sortBy, loading });
+    if (loading && !loadMore) {
+      console.log('Skipping fetch - already loading');
+      return;
+    }
     
     setLoading(!loadMore);
     
     try {
       const offset = loadMore ? products.length : 0;
       const limit = 12; // Optimized batch size
+      
+      console.log('Building query with', { offset, limit, category });
       
       // Ultra-optimized query with indexes
       let query = supabase
@@ -174,7 +180,10 @@ const Products = () => {
           query = query.order('created_at', { ascending: false });
       }
       
+      console.log('Executing query...');
       const { data, error } = await query;
+      
+      console.log('Query result:', { data, error });
       
       if (error) throw error;
       
