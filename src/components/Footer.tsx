@@ -160,6 +160,18 @@ const Footer = () => {
             © 2025 SmartHub Computers. All rights reserved. | Privacy Policy | Terms of Service
           </p>
         </div>
+        
+        {/* Moving Developer Credit */}
+        <div className="overflow-hidden bg-background/5 mt-4 py-2">
+          <div className="animate-scroll whitespace-nowrap text-background/70 text-xs">
+            <span className="inline-block px-4">
+              designed and developed by sam, for website developments and designs contact me at sammdev.ai@gmail.com, cell 0706499848
+            </span>
+            <span className="inline-block px-4">
+              designed and developed by sam, for website developments and designs contact me at sammdev.ai@gmail.com, cell 0706499848
+            </span>
+          </div>
+        </div>
       </div>
     </footer>
   );
