@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      ads: {
+        Row: {
+          active: boolean | null
+          ad_type: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          link_url: string | null
+          product_id: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          ad_type: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          product_id?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          ad_type?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          product_id?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string | null

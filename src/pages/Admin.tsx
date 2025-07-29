@@ -6,7 +6,7 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut, Package, ShoppingCart, MessageSquare, Users, Megaphone, Zap, Ticket, Smartphone, Headphones, CreditCard, Menu, X, ChevronDown, FileText } from 'lucide-react';
+import { LogOut, Package, ShoppingCart, MessageSquare, Users, Megaphone, Zap, Ticket, Smartphone, Headphones, CreditCard, Menu, X, ChevronDown, FileText, Monitor } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Lazy load admin components for better performance
@@ -22,6 +22,7 @@ const MpesaConfirmationManager = lazy(() => import('@/components/admin/MpesaConf
 const NcbaLoopPaymentsManager = lazy(() => import('@/components/admin/NcbaLoopPaymentsManager'));
 const SupportTicketsManager = lazy(() => import('@/components/admin/SupportTicketsManager'));
 const ReceiptGenerator = lazy(() => import('@/components/admin/ReceiptGenerator'));
+const AdsManager = lazy(() => import('@/components/admin/AdsManager'));
 import { toast } from 'sonner';
 
 const Admin = () => {
@@ -43,6 +44,7 @@ const Admin = () => {
     { value: "messages", label: "Messages", icon: MessageSquare },
     { value: "users", label: "Users", icon: Users },
     { value: "promotions", label: "Promotions", icon: Megaphone },
+    { value: "ads", label: "Ads", icon: Monitor },
     { value: "support", label: "Support", icon: Headphones },
   ];
 
@@ -402,6 +404,22 @@ const Admin = () => {
               <CardContent>
                 <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
                   <PromotionsManager />
+                </Suspense>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="ads">
+            <Card>
+              <CardHeader>
+                <CardTitle>Ads Management</CardTitle>
+                <CardDescription>
+                  Create and manage advertisements displayed on the homepage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <AdsManager />
                 </Suspense>
               </CardContent>
             </Card>

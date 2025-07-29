@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Play, Zap, Upload, X, Plus } from 'lucide-react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
+import AdsSection from '@/components/AdsSection';
 import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -253,6 +254,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main>
+        <AdsSection />
         <Hero />
         
         {/* Admin Debug Section - Only show to admin users */}
