@@ -146,9 +146,17 @@ const FeaturedProducts = () => {
     
     const fetchFeaturedProducts = async () => {
       try {
-        // Check cache first
-        const cachedProducts = localStorage.getItem('featuredProducts');
-        const cachedTimestamp = localStorage.getItem('featuredProductsTimestamp');
+        // Check cache first (with error handling)
+        let cachedProducts = null;
+        let cachedTimestamp = null;
+        
+        try {
+          cachedProducts = localStorage.getItem('featuredProducts');
+          cachedTimestamp = localStorage.getItem('featuredProductsTimestamp');
+        } catch (e) {
+          // localStorage might be full or disabled
+          console.warn('localStorage access failed:', e);
+        }
         
         if (cachedProducts && cachedTimestamp && 
             Date.now() - parseInt(cachedTimestamp) < 300000) { // 5 min cache
@@ -159,10 +167,10 @@ const FeaturedProducts = () => {
           return;
         }
 
-        // Optimized query - only essential fields, limit results
+        // Minimal query - only essential fields
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, price, image_urls, original_price, rating, reviews_count, badge, badge_color, in_stock, category')
+          .select('id, name, price, image_urls, rating, in_stock')
           .eq('in_stock', true)
           .is('deleted_at', null)
           .not('image_urls', 'is', null)
@@ -172,6 +180,7 @@ const FeaturedProducts = () => {
         if (!isMounted) return;
         if (error) throw error;
 
+        // Lightweight transform
         const transformedProducts = data?.map(product => {
           let imageUrls: string[] = [];
           
@@ -184,33 +193,68 @@ const FeaturedProducts = () => {
             }
           }
 
+          // Only store essential data
           return {
-            ...product,
-            images: imageUrls.filter(url => url && url.trim()),
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            images: imageUrls.filter(url => url && url.trim()).slice(0, 1), // Only first image
             description: '',
-            original_price: product.original_price || null,
+            original_price: null,
             rating: product.rating || 5,
-            reviews_count: product.reviews_count || 0,
-            badge: product.badge || null,
-            badge_color: product.badge_color || null,
+            reviews_count: 0,
+            badge: null,
+            badge_color: null,
             in_stock: product.in_stock !== false,
-            category: product.category || 'Electronics'
+            category: 'Electronics'
           };
         }).filter(product => product.images.length > 0) || [];
 
         if (isMounted) {
           setProducts(transformedProducts);
           setLoading(false);
-          localStorage.setItem('featuredProducts', JSON.stringify(transformedProducts));
-          localStorage.setItem('featuredProductsTimestamp', Date.now().toString());
+          
+          // Safe localStorage with minimal data
+          try {
+            const minimalData = transformedProducts.map(p => ({
+              id: p.id,
+              name: p.name,
+              price: p.price,
+              images: p.images.slice(0, 1) // Only first image
+            }));
+            localStorage.setItem('featuredProducts', JSON.stringify(minimalData));
+            localStorage.setItem('featuredProductsTimestamp', Date.now().toString());
+          } catch (e) {
+            console.warn('Failed to cache products:', e);
+            // Continue without caching
+          }
         }
       } catch (error) {
         console.error('Error fetching featured products:', error);
         if (isMounted) {
           setLoading(false);
-          const cachedProducts = localStorage.getItem('featuredProducts');
-          if (cachedProducts) {
-            setProducts(JSON.parse(cachedProducts));
+          
+          // Try to load from cache as fallback
+          try {
+            const cachedProducts = localStorage.getItem('featuredProducts');
+            if (cachedProducts) {
+              const parsed = JSON.parse(cachedProducts);
+              // Ensure cached data has required fields
+              const validProducts = parsed.map((p: any) => ({
+                ...p,
+                description: p.description || '',
+                original_price: p.original_price || null,
+                rating: p.rating || 5,
+                reviews_count: p.reviews_count || 0,
+                badge: p.badge || null,
+                badge_color: p.badge_color || null,
+                in_stock: p.in_stock !== false,
+                category: p.category || 'Electronics'
+              }));
+              setProducts(validProducts);
+            }
+          } catch (cacheError) {
+            console.warn('Failed to load from cache:', cacheError);
           }
         }
       }
