@@ -142,50 +142,57 @@ const Products = () => {
     
     try {
       const offset = loadMore ? products.length : 0;
-      const limit = 20; // Smaller batch size for faster loading
+      const limit = 12; // Optimized batch size
       
-      // Optimized query - only select needed fields initially
+      // Ultra-optimized query with indexes
       let query = supabase
         .from('products')
         .select('id, name, price, original_price, image_urls, rating, reviews_count, badge, badge_color, in_stock, category')
+        .eq('in_stock', true)
         .is('deleted_at', null)
+        .not('image_urls', 'is', null)
         .range(offset, offset + limit - 1);
       
       if (category !== 'all') {
         query = query.eq('category', category);
       }
       
-      // Apply sorting
-      if (sortBy === 'price_low') {
-        query = query.order('price', { ascending: true });
-      } else if (sortBy === 'price_high') {
-        query = query.order('price', { ascending: false });
-      } else if (sortBy === 'rating') {
-        query = query.order('rating', { ascending: false });
-      } else {
-        query = query.order('name', { ascending: true });
+      // Optimized sorting
+      switch (sortBy) {
+        case 'price_low':
+          query = query.order('price', { ascending: true });
+          break;
+        case 'price_high':
+          query = query.order('price', { ascending: false });
+          break;
+        case 'rating':
+          query = query.order('rating', { ascending: false });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
       }
       
       const { data, error } = await query;
       
       if (error) throw error;
       
-      // Transform products to include image_url and images
+      // Fast transform with minimal processing
       const transformedProducts = data?.map(product => {
         let images = [];
         try {
           images = product.image_urls ? JSON.parse(product.image_urls) : [];
+          if (!Array.isArray(images)) images = [product.image_urls];
         } catch (e) {
-          images = [];
+          images = product.image_urls ? [product.image_urls] : [];
         }
         
         return {
           ...product,
-          image_url: images[0] || 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center',
-          images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center'],
-          description: '' // Only load description when needed
+          image_url: images[0] || '',
+          images: images,
+          description: ''
         };
-      }) || [];
+      }).filter(p => p.images.length > 0) || [];
       
       if (loadMore) {
         setProducts(prev => [...prev, ...transformedProducts]);

@@ -143,7 +143,6 @@ const FeaturedProducts = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const controller = new AbortController();
     
     const fetchFeaturedProducts = async () => {
       try {
@@ -152,7 +151,7 @@ const FeaturedProducts = () => {
         const cachedTimestamp = localStorage.getItem('featuredProductsTimestamp');
         
         if (cachedProducts && cachedTimestamp && 
-            Date.now() - parseInt(cachedTimestamp) < 3600000) {
+            Date.now() - parseInt(cachedTimestamp) < 300000) { // 5 min cache
           if (isMounted) {
             setProducts(JSON.parse(cachedProducts));
             setLoading(false);
@@ -160,82 +159,44 @@ const FeaturedProducts = () => {
           return;
         }
 
-        // Fetch with timeout
-        const timeout = setTimeout(() => {
-          if (isMounted) setLoading(false);
-          controller.abort();
-        }, 3000);
-
+        // Optimized query - only essential fields, limit results
         const { data, error } = await supabase
           .from('products')
-          .select(`
-            id, 
-            name, 
-            price, 
-            description,
-            images,
-            image_urls,
-            original_price,
-            rating,
-            reviews_count,
-            badge,
-            badge_color,
-            in_stock,
-            category
-          `)
+          .select('id, name, price, image_urls, original_price, rating, reviews_count, badge, badge_color, in_stock, category')
           .eq('in_stock', true)
           .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        clearTimeout(timeout);
+          .not('image_urls', 'is', null)
+          .limit(4)
+          .order('rating', { ascending: false });
 
         if (!isMounted) return;
         if (error) throw error;
 
-        const transformedProducts = data
-          ?.map(product => {
-            let imageUrls: string[] = [];
-            
-            // Try image_urls first, then images
-            if (product.image_urls) {
-              try {
-                imageUrls = JSON.parse(product.image_urls);
-                if (!Array.isArray(imageUrls)) {
-                  imageUrls = [product.image_urls];
-                }
-              } catch {
-                imageUrls = [product.image_urls];
-              }
-            } else if (product.images) {
-              try {
-                imageUrls = JSON.parse(product.images);
-                if (!Array.isArray(imageUrls)) {
-                  imageUrls = [product.images];
-                }
-              } catch {
-                imageUrls = [product.images];
-              }
+        const transformedProducts = data?.map(product => {
+          let imageUrls: string[] = [];
+          
+          if (product.image_urls) {
+            try {
+              imageUrls = JSON.parse(product.image_urls);
+              if (!Array.isArray(imageUrls)) imageUrls = [product.image_urls];
+            } catch {
+              imageUrls = [product.image_urls];
             }
+          }
 
-            // Filter out any empty or invalid image URLs
-            imageUrls = imageUrls.filter(url => url && !url.includes('lovable-uploads'));
-
-            return {
-              ...product,
-              images: imageUrls,
-              original_price: product.original_price || null,
-              rating: product.rating || 5,
-              reviews_count: product.reviews_count || 0,
-              badge: product.badge || null,
-              badge_color: product.badge_color || null,
-              in_stock: product.in_stock !== false,
-              category: product.category || 'Electronics'
-            };
-          })
-          // Only include products with at least one valid image
-          .filter(product => product.images && product.images.length > 0)
-          // Take the first 4 products with valid images
-          .slice(0, 4) || [];
+          return {
+            ...product,
+            images: imageUrls.filter(url => url && url.trim()),
+            description: '',
+            original_price: product.original_price || null,
+            rating: product.rating || 5,
+            reviews_count: product.reviews_count || 0,
+            badge: product.badge || null,
+            badge_color: product.badge_color || null,
+            in_stock: product.in_stock !== false,
+            category: product.category || 'Electronics'
+          };
+        }).filter(product => product.images.length > 0) || [];
 
         if (isMounted) {
           setProducts(transformedProducts);
@@ -244,6 +205,7 @@ const FeaturedProducts = () => {
           localStorage.setItem('featuredProductsTimestamp', Date.now().toString());
         }
       } catch (error) {
+        console.error('Error fetching featured products:', error);
         if (isMounted) {
           setLoading(false);
           const cachedProducts = localStorage.getItem('featuredProducts');
@@ -258,7 +220,6 @@ const FeaturedProducts = () => {
 
     return () => {
       isMounted = false;
-      controller.abort();
     };
   }, []);
 
@@ -286,16 +247,22 @@ const FeaturedProducts = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Products</h2>
-            <p className="text-muted-foreground text-lg">Loading our latest products...</p>
+            <p className="text-muted-foreground text-lg">Discovering amazing products for you...</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-muted rounded-lg aspect-[4/3] mb-4"></div>
-                <div className="h-4 bg-muted rounded mb-2"></div>
-                <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
-                <div className="h-8 bg-muted rounded"></div>
-              </div>
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-secondary/20">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <div className="h-5 bg-gradient-to-r from-muted via-muted/50 to-muted rounded animate-pulse"></div>
+                    <div className="h-4 bg-gradient-to-r from-muted via-muted/50 to-muted rounded w-3/4 animate-pulse"></div>
+                    <div className="h-10 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded animate-pulse"></div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
