@@ -8,7 +8,7 @@
     <changefreq>daily</changefreq>
   </url>
   
-  <!-- Main Pages -->
+  <!-- Main Product Pages -->
   <url>
     <loc>https://smarthubcomputers.com/products</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
@@ -19,132 +19,70 @@
     <loc>https://smarthubcomputers.com/flash-sales</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
     <priority>0.90</priority>
-    <changefreq>daily</changefreq>
+    <changefreq>hourly</changefreq>
   </url>
   
-  <!-- Product Categories -->
-  <url>
-    <loc>https://smarthubcomputers.com/products/laptops</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/desktops</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/components</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/peripherals</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/gaming</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/audio</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/printers</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/phones</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/products/refurbished-phones</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.90</priority>
-    <changefreq>daily</changefreq>
-  </url>
-  
-  <!-- Legacy category routes (for backwards compatibility) -->
+  <!-- Primary Product Categories -->
   <url>
     <loc>https://smarthubcomputers.com/laptops</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+    <changefreq>daily</changefreq>
   </url>
   <url>
     <loc>https://smarthubcomputers.com/desktops</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/gaming</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.90</priority>
+    <changefreq>daily</changefreq>
   </url>
   <url>
     <loc>https://smarthubcomputers.com/components</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
     <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
   </url>
   <url>
     <loc>https://smarthubcomputers.com/peripherals</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
     <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/gaming</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/audio</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/printers</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
   </url>
   <url>
     <loc>https://smarthubcomputers.com/phones</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
     <priority>0.85</priority>
-    <changefreq>weekly</changefreq>
+    <changefreq>daily</changefreq>
   </url>
   <url>
     <loc>https://smarthubcomputers.com/refurbished-phones</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.85</priority>
+    <priority>0.80</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/audio</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.80</priority>
     <changefreq>weekly</changefreq>
   </url>
-  
-  <!-- User Account Pages -->
+  <url>
+    <loc>https://smarthubcomputers.com/printers</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.80</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <!-- User Account & Shopping Pages -->
   <url>
     <loc>https://smarthubcomputers.com/auth</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
     <priority>0.70</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://smarthubcomputers.com/my-orders</loc>
-    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.65</priority>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -153,20 +91,132 @@
     <priority>0.60</priority>
     <changefreq>never</changefreq>
   </url>
-  
-  <!-- Product Detail Pages Pattern -->
+  <url>
+    <loc>https://smarthubcomputers.com/my-orders</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.65</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <!-- Product Details Pattern -->
   <url>
     <loc>https://smarthubcomputers.com/products/details/</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
-    <priority>0.80</priority>
+    <priority>0.85</priority>
     <changefreq>weekly</changefreq>
   </url>
-  
-  <!-- API Documentation (if exists) -->
+
+  <!-- Category-based Product URLs -->
   <url>
-    <loc>https://smarthubcomputers.com/api/</loc>
+    <loc>https://smarthubcomputers.com/products/laptops</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.88</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/desktops</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.88</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/gaming</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.88</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/components</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.83</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/peripherals</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.83</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/phones</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.83</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/refurbished-phones</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.78</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/audio</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.78</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products/printers</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.78</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <!-- Admin Areas (Lower Priority) -->
+  <url>
+    <loc>https://smarthubcomputers.com/admin</loc>
     <lastmod>2025-01-29T00:00:00+00:00</lastmod>
     <priority>0.30</priority>
     <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Search and Filter URLs -->
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=laptops</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.75</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=desktops</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.75</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=gaming</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.75</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=components</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.70</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=peripherals</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.70</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=phones</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.70</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=audio</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.65</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://smarthubcomputers.com/products?category=printers</loc>
+    <lastmod>2025-01-29T00:00:00+00:00</lastmod>
+    <priority>0.65</priority>
+    <changefreq>weekly</changefreq>
   </url>
 </urlset>
