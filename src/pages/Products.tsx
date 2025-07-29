@@ -139,12 +139,12 @@ const Products = () => {
 
   const fetchProducts = async (loadMore = false) => {
     console.log('fetchProducts called', { loadMore, category, sortBy, loading });
-    if (loading && !loadMore) {
-      console.log('Skipping fetch - already loading');
+    if (loading && loadMore) {
+      console.log('Skipping fetch - already loading and is loadMore');
       return;
     }
     
-    setLoading(!loadMore);
+    setLoading(true);
     
     try {
       const offset = loadMore ? products.length : 0;
