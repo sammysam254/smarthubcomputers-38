@@ -114,10 +114,68 @@ async function handleChat(data: ChatRequest): Promise<Response> {
   }
 
   try {
-    // Build conversation context
+    console.log('Processing chat message:', message);
+
+    // Fetch current products from database for real-time product intelligence
+    const { data: products, error: productsError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (productsError) {
+      console.error('Error fetching products:', productsError);
+    }
+
+    console.log(`Found ${products?.length || 0} products in database`);
+
+    // Prepare products context for AI with current inventory
+    const productsContext = products?.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      original_price: product.original_price,
+      category: product.category,
+      in_stock: product.in_stock,
+      rating: product.rating,
+      reviews_count: product.reviews_count,
+      badge: product.badge,
+      images: product.images ? JSON.parse(product.images) : []
+    })) || [];
+
+    // Enhanced system context with live product data
+    const enhancedContext = `${WEBSITE_CONTEXT}
+
+CRITICAL: LIVE PRODUCT INVENTORY ACCESS
+You now have access to our real-time product database. Use this data to provide accurate stock information, pricing, and recommendations.
+
+CURRENT INVENTORY (${products?.length || 0} products):
+${JSON.stringify(productsContext, null, 2)}
+
+PRODUCT INTELLIGENCE GUIDELINES:
+1. **Stock Checking**: Always check the 'in_stock' field before answering availability questions
+2. **Price Accuracy**: Use exact prices from database, format as "KES X,XXX"
+3. **Smart Recommendations**: Suggest products based on available inventory, customer needs, ratings, and price range
+4. **Category Understanding**: Search products by category when customers ask about specific types
+5. **Alternative Suggestions**: If a product is out of stock, recommend similar available items
+6. **Detailed Information**: Provide product descriptions, ratings, and specifications when relevant
+7. **Value Comparison**: Mention discounts when original_price is higher than current price
+
+ENHANCED RESPONSE BEHAVIOR:
+- Scan the inventory data before answering any product-related questions
+- Provide specific product names, prices, and stock status
+- Make intelligent recommendations based on available products
+- If no products match a query, explain clearly and suggest alternatives
+- Always mention exact stock availability (in stock/out of stock)
+- Help customers compare products and find the best options
+
+Remember: You have live access to our current inventory, so provide accurate, real-time information to help customers make informed decisions.`;
+
+    // Build conversation context with enhanced product intelligence
     const messages = [
-      { role: 'user', parts: [{ text: WEBSITE_CONTEXT }] },
-      { role: 'model', parts: [{ text: 'I understand. I am now ready to assist customers of SmartHub Computers with their inquiries.' }] },
+      { role: 'user', parts: [{ text: enhancedContext }] },
+      { role: 'model', parts: [{ text: 'I understand. I now have access to SmartHub Computers\' live product inventory and am ready to provide accurate stock information, pricing, and intelligent product recommendations to customers.' }] },
       ...conversationHistory.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'model',
         parts: [{ text: msg.content }]
@@ -148,6 +206,8 @@ async function handleChat(data: ChatRequest): Promise<Response> {
     const result = await response.json();
     const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || 
                      'I apologize, but I encountered an issue processing your request. Please try again or contact our support team.';
+
+    console.log('AI response generated with product intelligence');
 
     // Check if the response suggests creating a support ticket
     const needsHumanSupport = aiResponse.toLowerCase().includes('support ticket') || 
