@@ -1,4 +1,3 @@
-import { Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const WhatsAppChat = () => {
@@ -16,7 +15,11 @@ const WhatsAppChat = () => {
         className="rounded-full h-14 w-14 bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
         size="icon"
       >
-        <Phone className="h-6 w-6" />
+        <img 
+          src="/lovable-uploads/b2e5c873-abbc-46f8-a663-eb79c2fb5a8c.png" 
+          alt="WhatsApp" 
+          className="h-8 w-8" 
+        />
       </Button>
     </div>
   );
