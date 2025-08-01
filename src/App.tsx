@@ -18,6 +18,7 @@ import MyOrders from "./pages/MyOrders";
 import NotFound from "./pages/NotFound";
 import LiveChat from "./components/LiveChat";
 import WhatsAppChat from "./components/WhatsAppChat";
+import ProductChatbot from "./components/ProductChatbot";
 import { NotificationPermission } from "./components/NotificationPermission";
 
 const queryClient = new QueryClient({
@@ -61,6 +62,7 @@ const App = () => (
                 </Routes>
                 <LiveChat />
                 <WhatsAppChat />
+                <ProductChatbot />
                 <NotificationPermission />
               </BrowserRouter>
             </TooltipProvider>
