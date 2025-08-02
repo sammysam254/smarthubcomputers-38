@@ -120,7 +120,7 @@ async function handleChat(data: ChatRequest): Promise<Response> {
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('*')
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (productsError) {
