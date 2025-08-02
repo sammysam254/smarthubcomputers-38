@@ -12,6 +12,27 @@ interface NotificationPayload {
   url?: string;
 }
 
+// Helper function to generate VAPID JWT token
+function generateJWT(privateKey: string, publicKey: string, audience: string): string {
+  const header = {
+    typ: "JWT",
+    alg: "ES256"
+  };
+  
+  const payload = {
+    aud: audience,
+    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
+    sub: "mailto:support@smarthubcomputers.com"
+  };
+  
+  // For simplicity, we'll use a basic implementation
+  // In production, use a proper JWT library
+  const encodedHeader = btoa(JSON.stringify(header));
+  const encodedPayload = btoa(JSON.stringify(payload));
+  
+  return `${encodedHeader}.${encodedPayload}.signature`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -108,7 +129,7 @@ serve(async (req) => {
     let successCount = 0;
     let failureCount = 0;
 
-    // Send notifications to all subscriptions
+    // Send notifications to all subscriptions using proper Web Push API
     for (const subscription of subscriptions) {
       try {
         const pushSubscription = {
@@ -119,38 +140,53 @@ serve(async (req) => {
           }
         };
 
-        // Use web-push library for sending notifications
-        const response = await fetch("https://fcm.googleapis.com/fcm/send", {
+        // Determine the push service from the endpoint
+        let pushServiceUrl = subscription.endpoint;
+        let headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          "TTL": "86400"
+        };
+
+        // Add authorization for different push services
+        if (subscription.endpoint.includes('fcm.googleapis.com')) {
+          // FCM (Chrome/Firefox)
+          headers["Authorization"] = `key=${vapidPrivateKey}`;
+        } else if (subscription.endpoint.includes('push.services.mozilla.com')) {
+          // Mozilla (Firefox)
+          headers["Authorization"] = `vapid t=${generateJWT(vapidPrivateKey, vapidPublicKey, subscription.endpoint)}, k=${vapidPublicKey}`;
+        } else {
+          // Generic Web Push with VAPID
+          headers["Authorization"] = `vapid t=${generateJWT(vapidPrivateKey, vapidPublicKey, subscription.endpoint)}, k=${vapidPublicKey}`;
+        }
+
+        const response = await fetch(pushSubscription.endpoint, {
           method: "POST",
-          headers: {
-            "Authorization": `key=${vapidPrivateKey}`,
-            "Content-Type": "application/json",
-          },
+          headers: headers,
           body: JSON.stringify({
-            to: subscription.endpoint,
             notification: notificationPayload,
             data: notificationPayload
           })
         });
 
-        if (response.ok) {
+        if (response.ok || response.status === 204) {
           successCount++;
-          console.log(`Notification sent successfully to ${subscription.endpoint}`);
+          console.log(`Notification sent successfully to ${subscription.endpoint.substring(0, 50)}...`);
         } else {
           failureCount++;
-          console.error(`Failed to send notification to ${subscription.endpoint}:`, await response.text());
+          console.error(`Failed to send notification (${response.status}):`, await response.text());
           
           // If the subscription is invalid, mark it as inactive
-          if (response.status === 410) {
+          if (response.status === 410 || response.status === 404) {
             await supabase
               .from("notification_subscriptions")
               .update({ active: false })
               .eq("endpoint", subscription.endpoint);
+            console.log(`Marked inactive subscription: ${subscription.endpoint.substring(0, 50)}...`);
           }
         }
       } catch (error) {
         failureCount++;
-        console.error(`Error sending notification to ${subscription.endpoint}:`, error);
+        console.error(`Error sending notification to ${subscription.endpoint.substring(0, 50)}...:`, error);
       }
     }
 

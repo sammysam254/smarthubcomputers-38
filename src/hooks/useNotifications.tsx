@@ -44,7 +44,7 @@ export const useNotifications = () => {
     try {
       const registration = await navigator.serviceWorker.ready;
       
-      // VAPID public key from environment
+      // VAPID public key - using a default for now, should be from environment
       const publicKey = 'BKr9hflKMHTnI1Kh7t_rNrWlVi7h-zMjrWrqGbJh3CsM6GJA5rq8xWmxZ7YFQJVH8aP2QxRz6mKjNhT9rXsVzA8';
       
       const subscription = await registration.pushManager.subscribe({
