@@ -200,6 +200,30 @@ Remember: You have live access to our current inventory, so provide accurate, re
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        console.log('Rate limit hit, providing helpful response');
+        return new Response(JSON.stringify({ 
+          response: `Hi there! 👋 I'm here to help you find the perfect computer or tech solution at SmartHub Computers!
+
+🔥 **What I can help you with:**
+• Find laptops, desktops, and accessories that match your needs
+• Compare prices and specifications
+• Get information about our current deals and promotions
+• Answer questions about our products and services
+
+💻 **Popular categories:**
+• Gaming laptops and desktops
+• Business computers
+• Tablets and accessories
+• Printers and office equipment
+
+What are you looking for today? I'd be happy to help you find the right tech solution!`,
+          needsHumanSupport: false
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
