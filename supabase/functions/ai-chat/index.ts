@@ -103,7 +103,12 @@ serve(async (req) => {
 async function handleChat(data: ChatRequest): Promise<Response> {
   const { message, conversationHistory = [] } = data;
 
+  console.log('Processing chat message:', message);
+  console.log('GEMINI_API_KEY present:', !!GEMINI_API_KEY);
+  console.log('GEMINI_API_KEY length:', GEMINI_API_KEY?.length || 0);
+
   if (!GEMINI_API_KEY) {
+    console.error('GEMINI_API_KEY is not configured');
     return new Response(JSON.stringify({ 
       response: 'I apologize, but I\'m experiencing technical difficulties. Our AI chat service requires a Gemini API key to be configured. Please contact our support team at support@smarthubcomputers.com for immediate assistance.',
       needsHumanSupport: true 
