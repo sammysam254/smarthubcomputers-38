@@ -183,7 +183,7 @@ Remember: You have live access to our current inventory, so provide accurate, re
       { role: 'user', parts: [{ text: message }] }
     ];
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -192,33 +192,17 @@ Remember: You have live access to our current inventory, so provide accurate, re
         contents: messages,
         generationConfig: {
           temperature: 0.7,
-          topP: 0.8,
-          topK: 40,
           maxOutputTokens: 1024,
-          candidateCount: 1,
         },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH", 
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
       }),
     });
 
+    console.log('Gemini API response status:', response.status);
+    
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error details:', errorText);
+      
       if (response.status === 429) {
         console.log('Rate limit hit, providing helpful response');
         return new Response(JSON.stringify({ 
@@ -243,10 +227,13 @@ What are you looking for today? I'd be happy to help you find the right tech sol
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
-      throw new Error(`Gemini API error: ${response.status}`);
+      
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
+    console.log('Gemini API response:', JSON.stringify(result, null, 2));
+    
     const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || 
                      'I apologize, but I encountered an issue processing your request. Please try again or contact our support team.';
 
