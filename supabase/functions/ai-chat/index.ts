@@ -121,61 +121,138 @@ async function handleChat(data: ChatRequest): Promise<Response> {
   try {
     console.log('Processing chat message:', message);
 
-    // Fetch current products from database for real-time product intelligence
+    // Fetch current products with enhanced data for better recommendations
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('*')
       .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+      .eq('in_stock', true)
+      .order('rating', { ascending: false });
+
+    // Also fetch out of stock products for alternative suggestions
+    const { data: outOfStockProducts, error: outOfStockError } = await supabase
+      .from('products')
+      .select('*')
+      .is('deleted_at', null)
+      .eq('in_stock', false)
+      .order('rating', { ascending: false });
+
+    const allProducts = [...(products || []), ...(outOfStockProducts || [])];
 
     if (productsError) {
       console.error('Error fetching products:', productsError);
     }
 
-    console.log(`Found ${products?.length || 0} products in database`);
+    console.log(`Found ${allProducts?.length || 0} total products (${products?.length || 0} in stock, ${outOfStockProducts?.length || 0} out of stock)`);
 
-    // Prepare products context for AI with current inventory
-    const productsContext = products?.map(product => ({
+    // Prepare enhanced products context with better categorization
+    const inStockContext = products?.map(product => ({
       id: product.id,
       name: product.name,
       description: product.description,
-      price: product.price,
-      original_price: product.original_price,
+      price: Number(product.price),
+      original_price: product.original_price ? Number(product.original_price) : null,
       category: product.category,
-      in_stock: product.in_stock,
-      rating: product.rating,
-      reviews_count: product.reviews_count,
+      in_stock: true,
+      rating: product.rating ? Number(product.rating) : 0,
+      reviews_count: product.reviews_count || 0,
       badge: product.badge,
+      badge_color: product.badge_color,
       images: product.images ? JSON.parse(product.images) : []
     })) || [];
 
-    // Enhanced system context with live product data
+    const outOfStockContext = outOfStockProducts?.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: Number(product.price),
+      original_price: product.original_price ? Number(product.original_price) : null,
+      category: product.category,
+      in_stock: false,
+      rating: product.rating ? Number(product.rating) : 0,
+      reviews_count: product.reviews_count || 0,
+      badge: product.badge,
+      badge_color: product.badge_color,
+      images: product.images ? JSON.parse(product.images) : []
+    })) || [];
+
+    // Categorize products for better recommendations
+    const productsByCategory = inStockContext.reduce((acc, product) => {
+      if (!acc[product.category]) {
+        acc[product.category] = [];
+      }
+      acc[product.category].push(product);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    // Get best-rated products
+    const topRatedProducts = inStockContext
+      .filter(p => p.rating > 0)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 5);
+
+    // Get budget-friendly options
+    const budgetProducts = inStockContext
+      .sort((a, b) => a.price - b.price)
+      .slice(0, 5);
+
+    // Get premium options
+    const premiumProducts = inStockContext
+      .sort((a, b) => b.price - a.price)
+      .slice(0, 5);
+
+    // Enhanced system context with live product data and intelligent recommendations
     const enhancedContext = `${WEBSITE_CONTEXT}
 
-CRITICAL: LIVE PRODUCT INVENTORY ACCESS
-You now have access to our real-time product database. Use this data to provide accurate stock information, pricing, and recommendations.
+🔥 CRITICAL: SMART PRODUCT RECOMMENDATION SYSTEM ACTIVE 🔥
+You now have real-time access to SmartHub Computers' complete inventory with advanced recommendation capabilities.
 
-CURRENT INVENTORY (${products?.length || 0} products):
-${JSON.stringify(productsContext, null, 2)}
+📊 LIVE INVENTORY SUMMARY:
+- Total Products: ${allProducts?.length || 0}
+- In Stock: ${products?.length || 0} products
+- Out of Stock: ${outOfStockProducts?.length || 0} products
+- Categories Available: ${Object.keys(productsByCategory).length}
 
-PRODUCT INTELLIGENCE GUIDELINES:
-1. **Stock Checking**: Always check the 'in_stock' field before answering availability questions
-2. **Price Accuracy**: Use exact prices from database, format as "KES X,XXX"
-3. **Smart Recommendations**: Suggest products based on available inventory, customer needs, ratings, and price range
-4. **Category Understanding**: Search products by category when customers ask about specific types
-5. **Alternative Suggestions**: If a product is out of stock, recommend similar available items
-6. **Detailed Information**: Provide product descriptions, ratings, and specifications when relevant
-7. **Value Comparison**: Mention discounts when original_price is higher than current price
+🏆 TOP-RATED PRODUCTS (Best Customer Satisfaction):
+${topRatedProducts.map(p => `• ${p.name} - KES ${p.price.toLocaleString()} (⭐ ${p.rating}/5.0, ${p.reviews_count} reviews)`).join('\n')}
 
-ENHANCED RESPONSE BEHAVIOR:
-- Scan the inventory data before answering any product-related questions
-- Provide specific product names, prices, and stock status
-- Make intelligent recommendations based on available products
-- If no products match a query, explain clearly and suggest alternatives
-- Always mention exact stock availability (in stock/out of stock)
-- Help customers compare products and find the best options
+💰 BUDGET-FRIENDLY OPTIONS (Under KES 50,000):
+${budgetProducts.map(p => `• ${p.name} - KES ${p.price.toLocaleString()}${p.original_price ? ` (Was KES ${p.original_price.toLocaleString()})` : ''}`).join('\n')}
 
-Remember: You have live access to our current inventory, so provide accurate, real-time information to help customers make informed decisions.`;
+💎 PREMIUM PRODUCTS (High-End Performance):
+${premiumProducts.map(p => `• ${p.name} - KES ${p.price.toLocaleString()}${p.badge ? ` [${p.badge}]` : ''}`).join('\n')}
+
+📂 PRODUCTS BY CATEGORY:
+${Object.entries(productsByCategory).map(([category, prods]) => 
+  `${category.toUpperCase()}: ${prods.length} products (${prods.slice(0, 3).map(p => p.name).join(', ')}${prods.length > 3 ? '...' : ''})`).join('\n')}
+
+🎯 INTELLIGENT RECOMMENDATION GUIDELINES:
+1. **ALWAYS** check actual stock status before recommending
+2. **PRIORITIZE** in-stock products over out-of-stock ones
+3. **MATCH** customer budget with appropriate price ranges
+4. **SUGGEST** alternatives from same category if preferred item unavailable
+5. **HIGHLIGHT** discounts (original_price > current price)
+6. **MENTION** ratings and reviews to build confidence
+7. **OFFER** multiple options (budget, mid-range, premium)
+8. **EXPLAIN** why you're recommending specific products
+
+🔍 COMPLETE PRODUCT DATABASE:
+IN STOCK PRODUCTS:
+${JSON.stringify(inStockContext, null, 2)}
+
+OUT OF STOCK PRODUCTS (for alternative suggestions):
+${JSON.stringify(outOfStockContext, null, 2)}
+
+🎭 ENHANCED BEHAVIOR:
+- Analyze customer needs first (budget, use case, preferences)
+- Provide 2-3 specific product recommendations with reasons
+- Include exact prices in KES format
+- Mention stock status clearly
+- Offer alternatives if items unavailable
+- Compare products when helpful
+- Suggest complementary accessories when appropriate
+
+Remember: You are a smart sales assistant with complete inventory knowledge. Make data-driven recommendations that truly help customers find their perfect tech solution!`;
 
     // Build conversation context with enhanced product intelligence
     const messages = [
