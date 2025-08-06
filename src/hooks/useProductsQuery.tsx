@@ -22,23 +22,30 @@ interface UseProductsQueryProps {
   sortBy: string;
 }
 
+// Global cache for products to avoid refetching
+const productCache = new Map<string, { data: Product[], timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
 
-  // Optimized image processing function
+  // Generate cache key
+  const cacheKey = useMemo(() => `${category}-${sortBy}`, [category, sortBy]);
+
+  // Lightning-fast image processing
   const processImages = useCallback((imageUrls: string | null): string[] => {
     if (!imageUrls) return [];
     try {
       const parsed = JSON.parse(imageUrls);
-      return Array.isArray(parsed) ? parsed : [imageUrls];
+      return Array.isArray(parsed) ? parsed.slice(0, 3) : [imageUrls]; // Limit to 3 images max
     } catch {
       return [imageUrls];
     }
   }, []);
 
-  // Memoized query builder
+  // Ultra-optimized query builder
   const buildQuery = useCallback((offset: number, limit: number) => {
     let query = supabase
       .from('products')
@@ -52,7 +59,7 @@ export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) =>
       query = query.eq('category', category);
     }
 
-    // Optimized sorting with indexed columns
+    // Optimized sorting with database indexes
     switch (sortBy) {
       case 'price_low':
         query = query.order('price', { ascending: true });
@@ -61,7 +68,7 @@ export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) =>
         query = query.order('price', { ascending: false });
         break;
       case 'rating':
-        query = query.order('rating', { ascending: false });
+        query = query.order('rating', { ascending: false }).order('reviews_count', { ascending: false });
         break;
       default:
         query = query.order('created_at', { ascending: false });
@@ -72,19 +79,30 @@ export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) =>
 
   const fetchProducts = useCallback(async (loadMore = false) => {
     if (loading && loadMore) return;
+
+    // Check cache first for initial load
+    if (!loadMore) {
+      const cached = productCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setProducts(cached.data);
+        setLoading(false);
+        setHasMore(cached.data.length >= 24);
+        return;
+      }
+    }
     
     setLoading(true);
     
     try {
       const offset = loadMore ? products.length : 0;
-      const limit = 24; // Increased batch size for better performance
+      const limit = 24; // Optimized batch size
       
       const query = buildQuery(offset, limit);
       const { data, error } = await query;
       
       if (error) throw error;
       
-      // Lightning-fast transformation with minimal processing
+      // Hyper-optimized transformation
       const transformedProducts = data?.map(product => {
         const images = processImages(product.image_urls);
         return {
@@ -95,25 +113,32 @@ export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) =>
         };
       }).filter(p => p.images.length > 0) || [];
       
-      if (loadMore) {
-        setProducts(prev => [...prev, ...transformedProducts]);
-      } else {
-        setProducts(transformedProducts);
+      const newProducts = loadMore ? [...products, ...transformedProducts] : transformedProducts;
+      setProducts(newProducts);
+      setHasMore(transformedProducts.length === limit);
+
+      // Cache results for initial loads only
+      if (!loadMore && transformedProducts.length > 0) {
+        productCache.set(cacheKey, {
+          data: transformedProducts,
+          timestamp: Date.now()
+        });
       }
       
-      setHasMore(transformedProducts.length === limit);
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
-  }, [products.length, buildQuery, processImages, loading]);
+  }, [products.length, buildQuery, processImages, loading, cacheKey]);
 
   // Reset and fetch when filters change
   useEffect(() => {
     setProducts([]);
     setLoading(true);
+    setHasMore(true);
     fetchProducts();
   }, [category, sortBy, buildQuery]);
 

@@ -26,22 +26,38 @@ interface ProductCardProps {
 }
 
 const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardProps) => {
+  // Early return for invalid products
+  if (!product.image_url && (!product.images || product.images.length === 0)) {
+    return null;
+  }
+
+  const imageUrl = product.image_url || product.images?.[0];
+  const hasDiscount = product.original_price && product.original_price > product.price;
+  const discountPercent = hasDiscount ? Math.round(((product.original_price! - product.price) / product.original_price!) * 100) : 0;
+
   return (
-    <Card className="hover:shadow-card transition-all duration-300 hover:-translate-y-1">
-      <CardContent className="p-0">
+    <Card className="hover:shadow-card transition-all duration-300 hover:-translate-y-1 h-full">
+      <CardContent className="p-0 h-full flex flex-col">
         <div className="relative aspect-square overflow-hidden rounded-t-lg">
-          <div className="relative w-full h-full bg-gray-100">
+          <div className="relative w-full h-full bg-gray-50">
             <img
-              src={product.image_url || 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&h=300&fit=crop&crop=center'}
+              src={imageUrl}
               alt={product.name}
               className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
               loading="lazy"
               decoding="async"
+              width={300}
+              height={300}
+              onError={(e) => {
+                // Fallback to placeholder on error
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&h=300&fit=crop&crop=center';
+              }}
             />
             
+            {/* Optimized image indicators */}
             {product.images?.length > 1 && (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1">
-                {product.images.map((_, index) => (
+                {product.images.slice(0, 5).map((_, index) => (
                   <div
                     key={index}
                     className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${index === 0 ? 'bg-primary' : 'bg-gray-300'}`}
@@ -51,9 +67,16 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
             )}
           </div>
           
+          {/* Optimized badges */}
           {product.badge && (
             <Badge className={`absolute top-2 left-2 text-xs md:text-sm ${product.badge_color || 'bg-primary'} text-white`}>
               {product.badge}
+            </Badge>
+          )}
+
+          {hasDiscount && (
+            <Badge className="absolute top-2 right-2 bg-red-500 text-white text-xs">
+              -{discountPercent}%
             </Badge>
           )}
           
@@ -64,15 +87,15 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
           )}
         </div>
 
-        <div className="p-2 md:p-4 space-y-2 md:space-y-3">
+        <div className="p-2 md:p-4 space-y-2 md:space-y-3 flex-1 flex flex-col">
           <h3 
-            className="font-semibold text-sm md:text-lg line-clamp-2 cursor-pointer hover:text-primary transition-colors"
+            className="font-semibold text-sm md:text-lg line-clamp-2 cursor-pointer hover:text-primary transition-colors flex-1"
             onClick={() => onProductClick(product)}
           >
             {product.name}
           </h3>
 
-          {/* Rating */}
+          {/* Optimized rating display */}
           <div className="flex items-center space-x-1 md:space-x-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
@@ -87,18 +110,18 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
               ))}
             </div>
             <span className="text-xs md:text-sm text-muted-foreground">
-              ({product.reviews_count})
+              ({product.reviews_count || 0})
             </span>
           </div>
 
-          {/* Price */}
+          {/* Optimized price display */}
           <div className="flex flex-col md:flex-row md:items-center md:space-x-2">
             <span className="text-base md:text-2xl font-bold text-primary">
               KES {product.price.toLocaleString()}
             </span>
-            {product.original_price && (
+            {hasDiscount && (
               <span className="text-xs md:text-sm text-muted-foreground line-through">
-                KES {product.original_price.toLocaleString()}
+                KES {product.original_price!.toLocaleString()}
               </span>
             )}
           </div>
@@ -106,7 +129,7 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
           <Button
             variant="cart"
             size="sm"
-            className="w-full text-xs md:text-sm"
+            className="w-full text-xs md:text-sm mt-auto"
             onClick={() => onAddToCart(product)}
             disabled={!product.in_stock}
           >

@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Star, ShoppingCart, Eye } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
+import OptimizedImage from './OptimizedImage';
 
 interface Product {
   id: string;
@@ -46,12 +47,10 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
       >
         <CardContent className="p-0">
           <div className="relative overflow-hidden rounded-t-lg aspect-[4/3]">
-            <img 
+            <OptimizedImage
               src={product.images[0]} 
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-              decoding="async"
               width={400}
               height={300}
             />
