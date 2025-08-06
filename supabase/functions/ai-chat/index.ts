@@ -140,8 +140,20 @@ async function handleChat(data: ChatRequest): Promise<Response> {
     const allProducts = [...(products || []), ...(outOfStockProducts || [])];
 
     if (productsError) {
-      console.error('Error fetching products:', productsError);
+      console.error('Error fetching in-stock products:', productsError);
     }
+    
+    if (outOfStockError) {
+      console.error('Error fetching out-of-stock products:', outOfStockError);
+    }
+
+    console.log(`Product fetch results:`, {
+      inStock: products?.length || 0,
+      outOfStock: outOfStockProducts?.length || 0,
+      total: allProducts?.length || 0,
+      productsError: productsError?.message,
+      outOfStockError: outOfStockError?.message
+    });
 
     console.log(`Found ${allProducts?.length || 0} total products (${products?.length || 0} in stock, ${outOfStockProducts?.length || 0} out of stock)`);
 
@@ -286,23 +298,38 @@ Remember: You are a smart sales assistant with complete inventory knowledge. Mak
       console.error('Gemini API error details:', errorText);
       
       if (response.status === 429) {
-        console.log('Rate limit hit, providing helpful response');
+        console.log('Rate limit hit, providing intelligent product recommendations');
+        
+        // When API is rate limited, provide smart product recommendations using our data
+        const productRecommendations = inStockContext.slice(0, 5).map(p => 
+          `• **${p.name}** - KES ${p.price.toLocaleString()}${p.original_price && p.original_price > p.price ? ` (Was KES ${p.original_price.toLocaleString()})` : ''}${p.rating > 0 ? ` ⭐ ${p.rating}/5` : ''}`
+        ).join('\n');
+
+        const categoryList = Object.keys(productsByCategory).map(cat => 
+          `• **${cat}**: ${productsByCategory[cat].length} products available`
+        ).join('\n');
+
         return new Response(JSON.stringify({ 
-          response: `Hi there! 👋 I'm here to help you find the perfect computer or tech solution at SmartHub Computers!
+          response: `Hi there! 👋 Welcome to SmartHub Computers!
 
-🔥 **What I can help you with:**
-• Find laptops, desktops, and accessories that match your needs
-• Compare prices and specifications
-• Get information about our current deals and promotions
-• Answer questions about our products and services
+🔥 **Here's what we have in stock for you:**
 
-💻 **Popular categories:**
-• Gaming laptops and desktops
-• Business computers
-• Tablets and accessories
-• Printers and office equipment
+${productRecommendations}
 
-What are you looking for today? I'd be happy to help you find the right tech solution!`,
+📂 **Browse by Category:**
+${categoryList}
+
+💰 **Special Offers:**
+${inStockContext.filter(p => p.original_price && p.original_price > p.price).length > 0 ? 
+  `We have ${inStockContext.filter(p => p.original_price && p.original_price > p.price).length} products on sale right now!` : 
+  'Check our website for the latest deals and promotions!'}
+
+🏪 **Visit us:**
+📍 Koinange Street, Uniafric House Room 208, Nairobi
+📞 0704144239
+🌐 https://smarthubcomputers.com
+
+What specific type of computer or tech solution are you looking for? I can help you find the perfect match from our ${products?.length || 0} in-stock products!`,
           needsHumanSupport: false
         }), {
           status: 200,
