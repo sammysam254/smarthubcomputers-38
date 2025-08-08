@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, ShoppingCart } from 'lucide-react';
+import OptimizedImage from './OptimizedImage';
 
 interface Product {
   id: string;
@@ -40,19 +41,14 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
       <CardContent className="p-0 h-full flex flex-col">
         <div className="relative aspect-square overflow-hidden rounded-t-lg">
           <div className="relative w-full h-full bg-gray-50">
-            <img
+            <OptimizedImage
               src={imageUrl}
               alt={product.name}
               className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-              decoding="async"
               width={300}
               height={300}
-              onError={(e) => {
-                // Fallback to placeholder on error
-                e.currentTarget.src = 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=300&h=300&fit=crop&crop=center';
-              }}
             />
+
             
             {/* Optimized image indicators */}
             {product.images?.length > 1 && (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Product {
@@ -25,14 +25,44 @@ interface UseProductsQueryProps {
 // Global cache for products to avoid refetching
 const productCache = new Map<string, { data: Product[], timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const INITIAL_LIMIT = 12; // smaller initial payload for faster first paint
+const PAGE_LIMIT = 24; // batch size for subsequent loads
+const NEXT_PREFETCH_LIMIT = 12; // background prefetch size
+const LOCAL_CACHE_PREFIX = 'products_cache_v1:';
 
 export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
+  const requestIdRef = useRef(0);
 
   // Generate cache key
   const cacheKey = useMemo(() => `${category}-${sortBy}`, [category, sortBy]);
+
+  const hydrateFromCache = useCallback(() => {
+    const cached = productCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setProducts(cached.data);
+      setLoading(false);
+      setHasMore(cached.data.length >= INITIAL_LIMIT);
+      return true;
+    }
+    try {
+      const raw = localStorage.getItem(LOCAL_CACHE_PREFIX + cacheKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { data: Product[]; timestamp: number };
+        if (Date.now() - parsed.timestamp < CACHE_DURATION && parsed.data?.length) {
+          setProducts(parsed.data);
+          setLoading(false);
+          setHasMore(parsed.data.length >= INITIAL_LIMIT);
+          return true;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  }, [cacheKey]);
 
   // Lightning-fast image processing
   const processImages = useCallback((imageUrls: string | null): string[] => {
@@ -77,32 +107,26 @@ export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) =>
     return query;
   }, [category, sortBy]);
 
-  const fetchProducts = useCallback(async (loadMore = false) => {
+  const fetchProducts = useCallback(async (loadMore = false, silent = false) => {
     if (loading && loadMore) return;
 
-    // Check cache first for initial load
-    if (!loadMore) {
-      const cached = productCache.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        setProducts(cached.data);
-        setLoading(false);
-        setHasMore(cached.data.length >= 24);
-        return;
-      }
+    const reqId = ++requestIdRef.current;
+
+    if (!loadMore && !silent) {
+      setLoading(true);
     }
-    
-    setLoading(true);
-    
+
     try {
       const offset = loadMore ? products.length : 0;
-      const limit = 24; // Optimized batch size
-      
+      const limit = loadMore ? PAGE_LIMIT : INITIAL_LIMIT; // smaller initial payload
+
       const query = buildQuery(offset, limit);
       const { data, error } = await query;
-      
+
+      if (reqId !== requestIdRef.current) return; // ignore stale responses
+
       if (error) throw error;
-      
-      // Hyper-optimized transformation
+
       const transformedProducts = data?.map(product => {
         const images = processImages(product.image_urls);
         return {
@@ -112,35 +136,65 @@ export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) =>
           description: ''
         };
       }).filter(p => p.images.length > 0) || [];
-      
-      const newProducts = loadMore ? [...products, ...transformedProducts] : transformedProducts;
-      setProducts(newProducts);
-      setHasMore(transformedProducts.length === limit);
 
-      // Cache results for initial loads only
-      if (!loadMore && transformedProducts.length > 0) {
-        productCache.set(cacheKey, {
-          data: transformedProducts,
-          timestamp: Date.now()
-        });
+      if (loadMore) {
+        const newProducts = [...products, ...transformedProducts];
+        setProducts(newProducts);
+        setHasMore(transformedProducts.length === limit);
+      } else {
+        setProducts(transformedProducts);
+        setHasMore(transformedProducts.length === limit || transformedProducts.length >= INITIAL_LIMIT);
+
+        // Cache initial results in-memory and in localStorage
+        const cachePayload = { data: transformedProducts, timestamp: Date.now() };
+        productCache.set(cacheKey, cachePayload);
+        try {
+          localStorage.setItem(LOCAL_CACHE_PREFIX + cacheKey, JSON.stringify(cachePayload));
+        } catch {}
+
+        // Background prefetch next chunk to make next interactions instant
+        (async () => {
+          try {
+            const prefetchOffset = transformedProducts.length;
+            const { data: more, error: prefetchError } = await buildQuery(prefetchOffset, NEXT_PREFETCH_LIMIT);
+            if (!prefetchError && more) {
+              const transformedMore = more.map(p => {
+                const imgs = processImages(p.image_urls);
+                return { ...p, image_url: imgs[0] || '', images: imgs, description: '' };
+              }).filter(p => p.images.length > 0);
+              const merged = [...transformedProducts, ...transformedMore];
+              const mergedPayload = { data: merged, timestamp: Date.now() };
+              productCache.set(cacheKey, mergedPayload);
+              try {
+                localStorage.setItem(LOCAL_CACHE_PREFIX + cacheKey, JSON.stringify(mergedPayload));
+              } catch {}
+            }
+          } catch {
+            // ignore
+          }
+        })();
       }
-      
+
     } catch (error) {
       console.error('Error fetching products:', error);
-      setProducts([]);
-      setHasMore(false);
+      if (!loadMore) {
+        setProducts([]);
+        setHasMore(false);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [products.length, buildQuery, processImages, loading, cacheKey]);
+  }, [products, buildQuery, processImages, loading, cacheKey]);
+
 
   // Reset and fetch when filters change
   useEffect(() => {
     setProducts([]);
-    setLoading(true);
     setHasMore(true);
-    fetchProducts();
-  }, [category, sortBy, buildQuery]);
+    const hydrated = hydrateFromCache();
+    fetchProducts(false, hydrated);
+  }, [category, sortBy, buildQuery, hydrateFromCache]);
+
 
   return {
     products,
