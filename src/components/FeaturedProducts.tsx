@@ -146,89 +146,87 @@ const FeaturedProducts = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      // Try to get cached products immediately
+      // Start with cached data immediately
       const cachedProducts = localStorage.getItem('featuredProducts');
       const cachedTimestamp = localStorage.getItem('featuredProductsTimestamp');
       
       if (cachedProducts && cachedTimestamp && Date.now() - parseInt(cachedTimestamp) < 300000) {
         setProducts(JSON.parse(cachedProducts));
         setLoading(false);
-        return true; // Return true if cache was used
       }
 
-      // Start fetching from server
-      const fetchPromise = supabase
+      // Fetch fresh data in parallel
+      const { data, error } = await supabase
         .from('products')
-        .select('id, name, price, image_urls, rating, in_stock')
+        .select(`
+          id,
+          name,
+          price,
+          image_urls,
+          original_price,
+          rating,
+          reviews_count,
+          badge,
+          badge_color,
+          in_stock,
+          category,
+          description
+        `)
         .eq('in_stock', true)
         .is('deleted_at', null)
         .not('image_urls', 'is', null)
-        .limit(4)
+        .limit(8) // Fetch more to have buffer
         .order('rating', { ascending: false });
-
-      // Wait for either cache or network with timeout
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 2500)
-      );
-
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (error) throw error;
 
-      const transformedProducts = data?.map(product => ({
+      const transformedProducts = data.map(product => ({
         id: product.id,
         name: product.name,
         price: product.price,
-        images: product.image_urls ? JSON.parse(product.image_urls).slice(0, 1) : [],
-        description: '',
-        original_price: null,
-        rating: product.rating || 5,
-        reviews_count: 0,
-        badge: null,
-        badge_color: null,
+        images: Array.isArray(product.image_urls) ? 
+          product.image_urls : 
+          (typeof product.image_urls === 'string' ? [product.image_urls] : []),
+        description: product.description || '',
+        original_price: product.original_price,
+        rating: product.rating || 4.5,
+        reviews_count: product.reviews_count || 0,
+        badge: product.badge,
+        badge_color: product.badge_color,
         in_stock: product.in_stock !== false,
-        category: 'Electronics'
-      })) || [];
+        category: product.category || 'Electronics'
+      })).filter(p => p.images.length > 0); // Only keep products with images
 
-      setProducts(transformedProducts);
+      setProducts(transformedProducts.slice(0, 4)); // Only show 4 initially
+      setLoading(false);
       
-      // Cache the minimal data
+      // Cache the full data
       localStorage.setItem('featuredProducts', JSON.stringify(transformedProducts));
       localStorage.setItem('featuredProductsTimestamp', Date.now().toString());
       
-      return true;
     } catch (err) {
       console.error('Fetch error:', err);
       setError('Failed to load products. Please try again later.');
-      return false;
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     let isMounted = true;
-    let fallbackTimer: NodeJS.Timeout;
+    const controller = new AbortController();
 
     const loadProducts = async () => {
-      // Try to load from cache or network quickly
-      const success = await fetchProducts();
+      // Show loading for at least 500ms to prevent flash
+      const minLoadingTime = new Promise(resolve => setTimeout(resolve, 500));
       
-      if (!success && isMounted) {
-        // If initial fetch fails, show loading for at least 1.5s to prevent flash
-        fallbackTimer = setTimeout(() => {
-          if (isMounted) {
-            setLoading(false);
-          }
-        }, 1500);
-      } else if (isMounted) {
-        setLoading(false);
-      }
+      await Promise.all([fetchProducts(), minLoadingTime]);
     };
 
     loadProducts();
 
     return () => {
       isMounted = false;
-      clearTimeout(fallbackTimer);
+      controller.abort();
     };
   }, [fetchProducts]);
 
@@ -249,20 +247,19 @@ const FeaturedProducts = () => {
     navigate('/products');
   }, [navigate]);
 
-  // Render skeleton if loading
   if (loading) {
     return (
       <section className="py-16 bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">Featured Products</h1>
-            <p className="text-muted-foreground text-lg">Discovering amazing products for you...</p>
+            <p className="text-muted-foreground text-lg">Loading our best products...</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(4)].map((_, i) => (
-              <Card key={i} className="overflow-hidden">
+              <Card key={i} className="overflow-hidden animate-pulse">
                 <CardContent className="p-0">
-                  <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-secondary/20 animate-pulse" />
+                  <div className="aspect-[4/3] bg-muted/50" />
                   <div className="p-4 space-y-3">
                     <div className="h-5 bg-muted rounded w-3/4" />
                     <div className="h-4 bg-muted rounded w-1/2" />
