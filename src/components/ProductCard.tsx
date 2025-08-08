@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,54 +27,83 @@ interface ProductCardProps {
 }
 
 const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [displayImage, setDisplayImage] = useState('');
+
   // Early return for invalid products
   if (!product.image_url && (!product.images || product.images.length === 0)) {
     return null;
   }
 
-  const imageUrl = product.image_url || product.images?.[0];
+  // Set initial image
+  useEffect(() => {
+    const imgUrl = product.image_url || product.images?.[0] || '';
+    setDisplayImage(imgUrl);
+    
+    // Preload image
+    if (imgUrl) {
+      const img = new Image();
+      img.src = imgUrl;
+      img.onload = () => setImageLoaded(true);
+    }
+  }, [product.image_url, product.images]);
+
   const hasDiscount = product.original_price && product.original_price > product.price;
-  const discountPercent = hasDiscount ? Math.round(((product.original_price! - product.price) / product.original_price!) * 100) : 0;
+  const discountPercent = hasDiscount 
+    ? Math.round(((product.original_price! - product.price) / product.original_price!) * 100) 
+    : 0;
 
   return (
     <Card className="hover:shadow-card transition-all duration-300 hover:-translate-y-1 h-full">
       <CardContent className="p-0 h-full flex flex-col">
         <div className="relative aspect-square overflow-hidden rounded-t-lg">
           <div className="relative w-full h-full bg-gray-50">
+            {/* Image with loading state */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
+            )}
+            
             <OptimizedImage
-              src={imageUrl}
+              src={displayImage}
               alt={product.name}
-              className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+              className={`w-full h-full object-contain transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
               width={300}
               height={300}
+              loading="eager"
+              onLoad={() => setImageLoaded(true)}
             />
 
-            
             {/* Optimized image indicators */}
             {product.images?.length > 1 && (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1">
                 {product.images.slice(0, 5).map((_, index) => (
                   <div
                     key={index}
-                    className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${index === 0 ? 'bg-primary' : 'bg-gray-300'}`}
+                    className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
+                      index === 0 ? 'bg-primary' : 'bg-gray-300'
+                    }`}
                   />
                 ))}
               </div>
             )}
           </div>
           
-          {/* Optimized badges */}
-          {product.badge && (
-            <Badge className={`absolute top-2 left-2 text-xs md:text-sm ${product.badge_color || 'bg-primary'} text-white`}>
-              {product.badge}
-            </Badge>
-          )}
+          {/* Optimized badges - render immediately */}
+          <div className="absolute top-2 left-2 right-2 flex justify-between">
+            {product.badge && (
+              <Badge className={`text-xs md:text-sm ${product.badge_color || 'bg-primary'} text-white`}>
+                {product.badge}
+              </Badge>
+            )}
 
-          {hasDiscount && (
-            <Badge className="absolute top-2 right-2 bg-red-500 text-white text-xs">
-              -{discountPercent}%
-            </Badge>
-          )}
+            {hasDiscount && (
+              <Badge className="bg-red-500 text-white text-xs">
+                -{discountPercent}%
+              </Badge>
+            )}
+          </div>
           
           {!product.in_stock && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -83,6 +112,7 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
           )}
         </div>
 
+        {/* Content that renders immediately */}
         <div className="p-2 md:p-4 space-y-2 md:space-y-3 flex-1 flex flex-col">
           <h3 
             className="font-semibold text-sm md:text-lg line-clamp-2 cursor-pointer hover:text-primary transition-colors flex-1"
@@ -91,7 +121,7 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
             {product.name}
           </h3>
 
-          {/* Optimized rating display */}
+          {/* Rating - render immediately with placeholder if loading */}
           <div className="flex items-center space-x-1 md:space-x-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
@@ -110,7 +140,7 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
             </span>
           </div>
 
-          {/* Optimized price display */}
+          {/* Price - render immediately */}
           <div className="flex flex-col md:flex-row md:items-center md:space-x-2">
             <span className="text-base md:text-2xl font-bold text-primary">
               KES {product.price.toLocaleString()}
