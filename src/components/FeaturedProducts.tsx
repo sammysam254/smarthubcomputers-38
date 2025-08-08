@@ -29,17 +29,15 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
   onAddToCart: (product: Product) => void;
   onViewDetails: (productId: string) => void;
 }) => {
-  // Only render if product has images
   if (!product.images || product.images.length === 0) {
     return null;
   }
 
   return (
-    <div className="group w-full text-left">
+    <article className="group w-full text-left" itemScope itemType="https://schema.org/Product">
       <Card 
         className="hover:shadow-card transition-all duration-300 hover:-translate-y-2 bg-background border-border/50 hover:border-primary/30 h-full cursor-pointer"
         onClick={(e) => {
-          console.log('Card clicked, calling onViewDetails');
           e.preventDefault();
           e.stopPropagation();
           onViewDetails(product.id);
@@ -53,6 +51,8 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               width={400}
               height={300}
+              loading="lazy"
+              itemProp="image"
             />
             
             {product.badge && (
@@ -69,6 +69,7 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
                   e.stopPropagation();
                   onViewDetails(product.id);
                 }}
+                aria-label={`View details for ${product.name}`}
               >
                 <Eye className="h-4 w-4" />
               </Button>
@@ -79,6 +80,7 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
                   e.stopPropagation();
                   onAddToCart(product);
                 }}
+                aria-label={`Add ${product.name} to cart`}
               >
                 <ShoppingCart className="h-4 w-4" />
               </Button>
@@ -86,11 +88,11 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
           </div>
 
           <div className="p-4 space-y-3">
-            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-2">
+            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors line-clamp-2" itemProp="name">
               {product.name}
             </h3>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2" itemProp="aggregateRating" itemScope itemType="https://schema.org/AggregateRating">
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   <Star 
@@ -100,13 +102,13 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
                 ))}
               </div>
               <span className="text-sm text-muted-foreground">
-                {product.rating} ({product.reviews_count})
+                <span itemProp="ratingValue">{product.rating}</span> (<span itemProp="reviewCount">{product.reviews_count}</span>)
               </span>
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-primary">
-                KES {product.price.toLocaleString()}
+              <span className="text-2xl font-bold text-primary" itemProp="offers" itemScope itemType="https://schema.org/Offer">
+                <span itemProp="priceCurrency" content="KES">KES</span> <span itemProp="price">{product.price.toLocaleString()}</span>
               </span>
               {product.original_price && (
                 <span className="text-sm text-muted-foreground line-through">
@@ -122,13 +124,14 @@ const ProductCard = memo(({ product, onAddToCart, onViewDetails }: {
                 e.stopPropagation();
                 onAddToCart(product);
               }}
+              aria-label={`Add ${product.name} to cart`}
             >
               Add to Cart
             </Button>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </article>
   );
 });
 
@@ -139,169 +142,131 @@ const FeaturedProducts = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      // Try to get cached products immediately
+      const cachedProducts = localStorage.getItem('featuredProducts');
+      const cachedTimestamp = localStorage.getItem('featuredProductsTimestamp');
+      
+      if (cachedProducts && cachedTimestamp && Date.now() - parseInt(cachedTimestamp) < 300000) {
+        setProducts(JSON.parse(cachedProducts));
+        setLoading(false);
+        return true; // Return true if cache was used
+      }
+
+      // Start fetching from server
+      const fetchPromise = supabase
+        .from('products')
+        .select('id, name, price, image_urls, rating, in_stock')
+        .eq('in_stock', true)
+        .is('deleted_at', null)
+        .not('image_urls', 'is', null)
+        .limit(4)
+        .order('rating', { ascending: false });
+
+      // Wait for either cache or network with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 2500)
+      );
+
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+
+      if (error) throw error;
+
+      const transformedProducts = data?.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        images: product.image_urls ? JSON.parse(product.image_urls).slice(0, 1) : [],
+        description: '',
+        original_price: null,
+        rating: product.rating || 5,
+        reviews_count: 0,
+        badge: null,
+        badge_color: null,
+        in_stock: product.in_stock !== false,
+        category: 'Electronics'
+      })) || [];
+
+      setProducts(transformedProducts);
+      
+      // Cache the minimal data
+      localStorage.setItem('featuredProducts', JSON.stringify(transformedProducts));
+      localStorage.setItem('featuredProductsTimestamp', Date.now().toString());
+      
+      return true;
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Failed to load products. Please try again later.');
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
-    
-    const fetchFeaturedProducts = async () => {
-      try {
-        // Check cache first (with error handling)
-        let cachedProducts = null;
-        let cachedTimestamp = null;
-        
-        try {
-          cachedProducts = localStorage.getItem('featuredProducts');
-          cachedTimestamp = localStorage.getItem('featuredProductsTimestamp');
-        } catch (e) {
-          // localStorage might be full or disabled
-          console.warn('localStorage access failed:', e);
-        }
-        
-        if (cachedProducts && cachedTimestamp && 
-            Date.now() - parseInt(cachedTimestamp) < 300000) { // 5 min cache
+    let fallbackTimer: NodeJS.Timeout;
+
+    const loadProducts = async () => {
+      // Try to load from cache or network quickly
+      const success = await fetchProducts();
+      
+      if (!success && isMounted) {
+        // If initial fetch fails, show loading for at least 1.5s to prevent flash
+        fallbackTimer = setTimeout(() => {
           if (isMounted) {
-            setProducts(JSON.parse(cachedProducts));
             setLoading(false);
           }
-          return;
-        }
-
-        // Minimal query - only essential fields
-        const { data, error } = await supabase
-          .from('products')
-          .select('id, name, price, image_urls, rating, in_stock')
-          .eq('in_stock', true)
-          .is('deleted_at', null)
-          .not('image_urls', 'is', null)
-          .limit(4)
-          .order('rating', { ascending: false });
-
-        if (!isMounted) return;
-        if (error) throw error;
-
-        // Lightweight transform with fast-image preference (avoid base64/data URLs)
-        const transformedProducts = data?.map(product => {
-          let imageUrls: string[] = [];
-          try {
-            imageUrls = product.image_urls ? JSON.parse(product.image_urls) : [];
-            if (!Array.isArray(imageUrls)) imageUrls = [product.image_urls].filter(Boolean) as string[];
-          } catch {
-            imageUrls = [product.image_urls].filter(Boolean) as string[];
-          }
-
-          const fastImage = imageUrls.find(u => typeof u === 'string' && /^https?:/i.test(u));
-          const finalImage = fastImage || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
-
-          return {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            images: [finalImage],
-            description: '',
-            original_price: null,
-            rating: product.rating || 5,
-            reviews_count: 0,
-            badge: null,
-            badge_color: null,
-            in_stock: product.in_stock !== false,
-            category: 'Electronics'
-          };
-        }) || [];
-
-        if (isMounted) {
-          setProducts(transformedProducts);
-          setLoading(false);
-          
-          // Safe localStorage with minimal data
-          try {
-            const minimalData = transformedProducts.map(p => ({
-              id: p.id,
-              name: p.name,
-              price: p.price,
-              images: p.images.slice(0, 1) // Only first image
-            }));
-            localStorage.setItem('featuredProducts', JSON.stringify(minimalData));
-            localStorage.setItem('featuredProductsTimestamp', Date.now().toString());
-          } catch (e) {
-            console.warn('Failed to cache products:', e);
-            // Continue without caching
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching featured products:', error);
-        if (isMounted) {
-          setLoading(false);
-          
-          // Try to load from cache as fallback
-          try {
-            const cachedProducts = localStorage.getItem('featuredProducts');
-            if (cachedProducts) {
-              const parsed = JSON.parse(cachedProducts);
-              // Ensure cached data has required fields
-              const validProducts = parsed.map((p: any) => ({
-                ...p,
-                description: p.description || '',
-                original_price: p.original_price || null,
-                rating: p.rating || 5,
-                reviews_count: p.reviews_count || 0,
-                badge: p.badge || null,
-                badge_color: p.badge_color || null,
-                in_stock: p.in_stock !== false,
-                category: p.category || 'Electronics'
-              }));
-              setProducts(validProducts);
-            }
-          } catch (cacheError) {
-            console.warn('Failed to load from cache:', cacheError);
-          }
-        }
+        }, 1500);
+      } else if (isMounted) {
+        setLoading(false);
       }
     };
 
-    fetchFeaturedProducts();
+    loadProducts();
 
     return () => {
       isMounted = false;
+      clearTimeout(fallbackTimer);
     };
-  }, []);
+  }, [fetchProducts]);
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = useCallback((product: Product) => {
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       image: product.images[0],
     });
-  };
+  }, [addToCart]);
 
-  const handleViewDetails = (productId: string) => {
-    console.log('handleViewDetails called with productId:', productId);
+  const handleViewDetails = useCallback((productId: string) => {
     navigate(`/products/${productId}`);
-  };
+  }, [navigate]);
 
-  const handleViewAll = () => {
+  const handleViewAll = useCallback(() => {
     navigate('/products');
-  };
+  }, [navigate]);
 
+  // Render skeleton if loading
   if (loading) {
     return (
       <section className="py-16 bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Products</h2>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">Featured Products</h1>
             <p className="text-muted-foreground text-lg">Discovering amazing products for you...</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-secondary/20">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-                  </div>
+                  <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-secondary/20 animate-pulse" />
                   <div className="p-4 space-y-3">
-                    <div className="h-5 bg-gradient-to-r from-muted via-muted/50 to-muted rounded animate-pulse"></div>
-                    <div className="h-4 bg-gradient-to-r from-muted via-muted/50 to-muted rounded w-3/4 animate-pulse"></div>
-                    <div className="h-10 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded animate-pulse"></div>
+                    <div className="h-5 bg-muted rounded w-3/4" />
+                    <div className="h-4 bg-muted rounded w-1/2" />
+                    <div className="h-10 bg-muted rounded" />
                   </div>
                 </CardContent>
               </Card>
@@ -315,16 +280,31 @@ const FeaturedProducts = () => {
   return (
     <section className="py-16 bg-secondary/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <header className="text-center mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
             Featured Products
-          </h2>
+          </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Discover our handpicked selection of premium computers and tech products
           </p>
-        </div>
+        </header>
 
-        {products.length > 0 ? (
+        {error ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">{error}</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                fetchProducts();
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : products.length > 0 ? (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {products.map((product) => (
