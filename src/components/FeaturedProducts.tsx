@@ -179,25 +179,24 @@ const FeaturedProducts = () => {
         if (!isMounted) return;
         if (error) throw error;
 
-        // Lightweight transform
+        // Lightweight transform with fast-image preference (avoid base64/data URLs)
         const transformedProducts = data?.map(product => {
           let imageUrls: string[] = [];
-          
-          if (product.image_urls) {
-            try {
-              imageUrls = JSON.parse(product.image_urls);
-              if (!Array.isArray(imageUrls)) imageUrls = [product.image_urls];
-            } catch {
-              imageUrls = [product.image_urls];
-            }
+          try {
+            imageUrls = product.image_urls ? JSON.parse(product.image_urls) : [];
+            if (!Array.isArray(imageUrls)) imageUrls = [product.image_urls].filter(Boolean) as string[];
+          } catch {
+            imageUrls = [product.image_urls].filter(Boolean) as string[];
           }
 
-          // Only store essential data
+          const fastImage = imageUrls.find(u => typeof u === 'string' && /^https?:/i.test(u));
+          const finalImage = fastImage || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+
           return {
             id: product.id,
             name: product.name,
             price: product.price,
-            images: imageUrls.filter(url => url && url.trim()).slice(0, 1), // Only first image
+            images: [finalImage],
             description: '',
             original_price: null,
             rating: product.rating || 5,
@@ -207,7 +206,7 @@ const FeaturedProducts = () => {
             in_stock: product.in_stock !== false,
             category: 'Electronics'
           };
-        }).filter(product => product.images.length > 0) || [];
+        }) || [];
 
         if (isMounted) {
           setProducts(transformedProducts);
@@ -297,7 +296,7 @@ const FeaturedProducts = () => {
               <Card key={i} className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-secondary/20">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
                   </div>
                   <div className="p-4 space-y-3">
                     <div className="h-5 bg-gradient-to-r from-muted via-muted/50 to-muted rounded animate-pulse"></div>

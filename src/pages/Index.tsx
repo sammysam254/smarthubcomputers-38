@@ -16,10 +16,11 @@ import AdsSection from '@/components/AdsSection';
 import Footer from '@/components/Footer';
 import InternalLinksSection from '@/components/InternalLinksSection';
 import { supabase } from '@/integrations/supabase/client';
+import FeaturedProducts from '@/components/FeaturedProducts';
 
 // Lazy load heavy components for better performance
 const Categories = lazy(() => import('@/components/Categories'));
-const FeaturedProducts = lazy(() => import('@/components/FeaturedProducts'));
+// FeaturedProducts is eagerly loaded above for faster first paint
 
 interface Promotion {
   id: string;
@@ -66,12 +67,10 @@ const PromotionProductCarousel = ({ products }: PromotionProductCarouselProps) =
   const getProductImage = (product: Product) => {
     try {
       const imagesArray = JSON.parse(product.images || '[]');
-      if (imagesArray.length > 0) return imagesArray[0];
-      
       const imageUrlsArray = JSON.parse(product.image_urls || '[]');
-      if (imageUrlsArray.length > 0) return imageUrlsArray[0];
-      
-      return 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+      const combined = [...(Array.isArray(imagesArray) ? imagesArray : []), ...(Array.isArray(imageUrlsArray) ? imageUrlsArray : [])];
+      const httpImage = combined.find((u) => typeof u === 'string' && /^https?:/i.test(u));
+      return httpImage || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
     } catch {
       return 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
     }
@@ -433,12 +432,10 @@ const Index = () => {
                     const getProductImage = (product: Product) => {
                       try {
                         const imagesArray = JSON.parse(product.images || '[]');
-                        if (imagesArray.length > 0) return imagesArray[0];
-                        
                         const imageUrlsArray = JSON.parse(product.image_urls || '[]');
-                        if (imageUrlsArray.length > 0) return imageUrlsArray[0];
-                        
-                        return 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                        const combined = [...(Array.isArray(imagesArray) ? imagesArray : []), ...(Array.isArray(imageUrlsArray) ? imageUrlsArray : [])];
+                        const httpImage = combined.find((u) => typeof u === 'string' && /^https?:/i.test(u));
+                        return httpImage || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
                       } catch {
                         return 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
                       }
@@ -582,9 +579,7 @@ const Index = () => {
           </div>
         </section>
         
-        <Suspense fallback={<div className="py-16 text-center">Loading products...</div>}>
-          <FeaturedProducts />
-        </Suspense>
+        <FeaturedProducts />
         
         <Suspense fallback={<div className="py-8 text-center">Loading categories...</div>}>
           <Categories />
