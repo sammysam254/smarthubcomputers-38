@@ -71,8 +71,7 @@ const ProductCard = memo(({ product, onAddToCart, onProductClick }: ProductCardP
               }`}
               width={300}
               height={300}
-              loading="eager"
-              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageLoaded(true)}
             />
 
             {/* Optimized image indicators */}

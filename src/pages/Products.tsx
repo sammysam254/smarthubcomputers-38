@@ -14,6 +14,22 @@ import ProductModal from '@/components/ProductModal';
 import ProductCard from '@/components/ProductCard';
 import SEOBreadcrumbs from '@/components/SEOBreadcrumbs';
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  original_price: number | null;
+  image_url: string;
+  images: string[];
+  category: string;
+  rating: number;
+  reviews_count: number;
+  badge: string | null;
+  badge_color: string | null;
+  in_stock: boolean;
+  description: string | null;
+}
+
 // Move category metadata outside component to prevent recreation
 const CATEGORY_META = {
   'laptops': {
@@ -56,14 +72,15 @@ const Products = () => {
     return '';
   }, [location.pathname]);
 
-  const categoryInfo = CATEGORY_META[currentCategory as keyof typeof CATEGORY_META] || {};
+  const categoryInfo = CATEGORY_META[currentCategory as keyof typeof CATEGORY_META] || {
+    title: 'Products - SmartHub Computers | Computer Store in Kenya',
+    description: 'Shop computers, laptops, components and accessories at SmartHub Computers.'
+  };
 
   // Optimized products query with debouncing
   const { products, loading, hasMore, fetchMore } = useProductsQuery({ 
     category, 
-    sortBy,
-    initialLimit: 12, // Load more initially
-    fetchLimit: 8    // Subsequent loads
+    sortBy
   });
 
   // Debounced search query

@@ -185,15 +185,16 @@ export const useProductsQuery = ({ category, sortBy }: UseProductsQueryProps) =>
       if (error) throw error;
 
       // Fast product transformation
-      const transformProduct = (product: any): Product => ({
-        ...product,
-        image_url: '', // Will be set below
-        images: [], // Will be set below
-        description: null,
-        category: product.category || 'general',
-        images: processImages(product.image_urls),
-        image_url: processImages(product.image_urls)[0] || ''
-      });
+      const transformProduct = (product: any): Product => {
+        const processedImages = processImages(product.image_urls);
+        return {
+          ...product,
+          description: null,
+          category: product.category || 'general',
+          images: processedImages,
+          image_url: processedImages[0] || ''
+        };
+      };
 
       const transformedProducts = (data || [])
         .map(transformProduct)
